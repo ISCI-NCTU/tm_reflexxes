@@ -1,9 +1,9 @@
 //  ---------------------- Doxygen info ----------------------
-//! \file 02_RMLPositionSampleApplication.cpp
+//! \file 08_RMLVelocitySampleApplication.cpp
 //!
 //! \brief
 //! Test application number 2 for the Reflexxes Motion Libraries
-//! (position-based interface, complete description of output values)
+//! (basic velocity-based interface, complete description of output values)
 //!
 //! \date March 2014
 //!
@@ -42,30 +42,29 @@
 #include <stdlib.h>
 
 #include <ReflexxesAPI.h>
-#include <RMLPositionFlags.h>
-#include <RMLPositionInputParameters.h>
-#include <RMLPositionOutputParameters.h>
+#include <RMLVelocityFlags.h>
+#include <RMLVelocityInputParameters.h>
+#include <RMLVelocityOutputParameters.h>
 
 
 //*************************************************************************
 // defines
 
-#define CYCLE_TIME_IN_SECONDS                   0.025
+#define CYCLE_TIME_IN_SECONDS                   0.001
 #define NUMBER_OF_DOFS                          3
-#define DEG2RAD 0.01745329252
-#define RAD2DEG 57.29577951
+
 
 //*************************************************************************
 // Main function to run the process that contains the test application
 //
 // This function contains source code to get started with the Type II
 // Reflexxes Motion Library. Based on the program
-// 01_RMLPositionSampleApplication.cpp, this sample code becomes extended by
-// using (and describing) all available output values of the algorithm.
-// As in the former example, we compute a trajectory for a system with
-// three degrees of freedom starting from an arbitrary state of motion.
-// This code snippet again directly corresponds to the example trajectories
-// shown in the documentation.
+// 04_RMLVelocitySampleApplication.cpp, this sample code becomes extended by
+// using (and describing) all available output values of the velocity-based
+// algorithm. As in the former example, we compute a trajectory for a
+// system with three degrees of freedom starting from an arbitrary state of
+// motion. This code snippet again directly corresponds to the example
+// trajectories shown in the documentation.
 //*************************************************************************
 int main()
 {
@@ -74,18 +73,17 @@ int main()
 
     bool                        FirstCycleCompleted         =   false   ;
 
-    int                         ResultValue                 =   0       ;
-
-    unsigned int                i                           =   0
+    int                         ResultValue                 =   0
+                            ,   i                           =   0
                             ,   j                           =   0       ;
 
     ReflexxesAPI                *RML                        =   NULL    ;
 
-    RMLPositionInputParameters  *IP                         =   NULL    ;
+    RMLVelocityInputParameters  *IP                         =   NULL    ;
 
-    RMLPositionOutputParameters *OP                         =   NULL    ;
+    RMLVelocityOutputParameters *OP                         =   NULL    ;
 
-    RMLPositionFlags            Flags                                   ;
+    RMLVelocityFlags            Flags                                   ;
 
     // ********************************************************************
     // Creating all relevant objects of the Type II Reflexxes Motion Library
@@ -93,9 +91,9 @@ int main()
     RML =   new ReflexxesAPI(                   NUMBER_OF_DOFS
                                             ,   CYCLE_TIME_IN_SECONDS   );
 
-    IP  =   new RMLPositionInputParameters(     NUMBER_OF_DOFS          );
+    IP  =   new RMLVelocityInputParameters(     NUMBER_OF_DOFS          );
 
-    OP  =   new RMLPositionOutputParameters(    NUMBER_OF_DOFS          );
+    OP  =   new RMLVelocityOutputParameters(    NUMBER_OF_DOFS          );
 
     // ********************************************************************
     // Set-up a timer with a period of one millisecond
@@ -104,9 +102,9 @@ int main()
 
     printf("-------------------------------------------------------\n"  );
     printf("Reflexxes Motion Libraries                             \n"  );
-    printf("Example: 02_RMLPositionSampleApplication               \n\n");
+    printf("Example: 08_RMLVelocitySampleApplication               \n\n");
     printf("This example demonstrates the use of the entire output \n"  );
-    printf("values of the position-based Online Trajectory         \n"  );
+    printf("values of the velocity-based Online Trajectory         \n"  );
     printf("Generation algorithm of the Type II Reflexxes Motion   \n"  );
     printf("Library.                                               \n\n");
     printf("Copyright (C) 2014 Google, Inc.                      \n"  );
@@ -117,7 +115,7 @@ int main()
 
     // In this test program, arbitrary values are chosen. If executed on a
     // real robot or mechanical system, the position is read and stored in
-    // an RMLPositionInputParameters::CurrentPositionVector vector object.
+    // an RMLVelocityInputParameters::CurrentPositionVector vector object.
     // For the very first motion after starting the controller, velocities
     // and acceleration are commonly set to zero. The desired target state
     // of motion and the motion constraints depend on the robot and the
@@ -127,50 +125,38 @@ int main()
     // an array of NUMBER_OF_DOFS double values), such that the Reflexxes
     // Library can be used in a universal way.
 
-    IP->CurrentPositionVector->VecData      [0] =    100.0      ;
-    IP->CurrentPositionVector->VecData      [1] =      0.0      ;
-    IP->CurrentPositionVector->VecData      [2] =     50.0      ;
+    IP->CurrentPositionVector->VecData      [0] =   -200.0      ;
+    IP->CurrentPositionVector->VecData      [1] =    100.0      ;
+    IP->CurrentPositionVector->VecData      [2] =   -300.0      ;
 
-    IP->CurrentVelocityVector->VecData      [0] =    100.0      ;
-    IP->CurrentVelocityVector->VecData      [1] =   -220.0      ;
-    IP->CurrentVelocityVector->VecData      [2] =    -50.0      ;
+    IP->CurrentVelocityVector->VecData      [0] =   -150.0      ;
+    IP->CurrentVelocityVector->VecData      [1] =    100.0      ;
+    IP->CurrentVelocityVector->VecData      [2] =     50.0      ;
 
-    IP->CurrentAccelerationVector->VecData  [0] =   -150.0      ;
-    IP->CurrentAccelerationVector->VecData  [1] =    250.0      ;
-    IP->CurrentAccelerationVector->VecData  [2] =    -50.0      ;
-    
-    // **********************************************************************
-    // Maximum parameter setup
-    //
+    IP->CurrentAccelerationVector->VecData  [0] =    350.0      ;
+    IP->CurrentAccelerationVector->VecData  [1] =   -500.0      ;
+    IP->CurrentAccelerationVector->VecData  [2] =      0.0      ;
 
-    IP->MaxVelocityVector->VecData          [0] =    300.0      ;
-    IP->MaxVelocityVector->VecData          [1] =    100.0      ;
-    IP->MaxVelocityVector->VecData          [2] =    300.0      ;
+    IP->MaxAccelerationVector->VecData      [0] =    500.0      ;
+    IP->MaxAccelerationVector->VecData      [1] =    500.0      ;
+    IP->MaxAccelerationVector->VecData      [2] =   1000.0      ;
 
-    IP->MaxAccelerationVector->VecData      [0] =    300.0      ;
-    IP->MaxAccelerationVector->VecData      [1] =    200.0      ;
-    IP->MaxAccelerationVector->VecData      [2] =    100.0      ;
+    IP->MaxJerkVector->VecData              [0] =   1000.0      ;
+    IP->MaxJerkVector->VecData              [1] =    700.0      ;
+    IP->MaxJerkVector->VecData              [2] =    500.0      ;
 
-    IP->MaxJerkVector->VecData              [0] =    400.0      ;
-    IP->MaxJerkVector->VecData              [1] =    300.0      ;
-    IP->MaxJerkVector->VecData              [2] =    200.0      ;
-
-
-    // **********************************************************************
-    // target parameter setup
-    //
-
-    IP->TargetPositionVector->VecData       [0] =   -600.0      ;
-    IP->TargetPositionVector->VecData       [1] =   -200.0      ;
-    IP->TargetPositionVector->VecData       [2] =   -350.0      ;
-
-    IP->TargetVelocityVector->VecData       [0] =    50.0       ;
-    IP->TargetVelocityVector->VecData       [1] =   -50.0       ;
-    IP->TargetVelocityVector->VecData       [2] =  -200.0       ;
+    IP->TargetVelocityVector->VecData       [0] =   150.0       ;
+    IP->TargetVelocityVector->VecData       [1] =    75.0       ;
+    IP->TargetVelocityVector->VecData       [2] =   100.0       ;
 
     IP->SelectionVector->VecData            [0] =   true        ;
     IP->SelectionVector->VecData            [1] =   true        ;
     IP->SelectionVector->VecData            [2] =   true        ;
+
+    // ********************************************************************
+    // Specifying the minimum synchronization time
+
+    IP->MinimumSynchronizationTime              =   2.5         ;
 
     // ********************************************************************
     // Checking the input parameters (optional)
@@ -184,6 +170,8 @@ int main()
         printf("Input values are INVALID!\n");
     }
 
+    Flags.SynchronizationBehavior   =   RMLFlags::ONLY_TIME_SYNCHRONIZATION;
+
     // ********************************************************************
     // Starting the control loop
 
@@ -196,7 +184,7 @@ int main()
         // ****************************************************************
 
         // Calling the Reflexxes OTG algorithm
-        ResultValue =   RML->RMLPosition(       *IP
+        ResultValue =   RML->RMLVelocity(       *IP
                                             ,   OP
                                             ,   Flags       );
 
@@ -218,8 +206,6 @@ int main()
             printf("-------------------------------------------------------\n");
             printf("General information:\n\n");
 
-            printf("The execution time of the current trajectory is %.3lf seconds.\n", OP->GetSynchronizationTime());
-
             if (OP->IsTrajectoryPhaseSynchronized())
             {
                 printf("The current trajectory is phase-synchronized.\n");
@@ -236,6 +222,16 @@ int main()
             {
                 printf("The input values did not change, and a new computation of the trajectory parameters was not required.\n");
             }
+
+            for ( j = 0; j < NUMBER_OF_DOFS; j++)
+            {
+                printf("The degree of freedom with the index %d will reach its target velocity at position %.3lf after %.3lf seconds.\n"
+                            ,   j
+                            ,   OP->PositionValuesAtTargetVelocity->VecData[j]
+                            ,   OP->ExecutionTimes->VecData[j]                  );
+            }
+
+            printf("The degree of freedom with the index %d will require the greatest execution time.\n", OP->GetDOFWithTheGreatestExecutionTime());
 
             printf("-------------------------------------------------------\n");
             printf("New state of motion:\n\n");
@@ -307,7 +303,6 @@ int main()
                 printf("\n");
             }
             printf("-------------------------------------------------------\n");
-
         }
         // ****************************************************************
 
