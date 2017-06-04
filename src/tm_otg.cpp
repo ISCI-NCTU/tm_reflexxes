@@ -120,7 +120,7 @@ int main()
     //IP->MaxJerkVector->VecData              [1] =    300.0      ;
     //IP->MaxJerkVector->VecData              [2] =    200.0      ;
 
-    IP->TargetPositionVector->VecData       [0] =   1.57      ;
+    IP->TargetPositionVector->VecData       [0] =   -1.57      ;
     //IP->TargetPositionVector->VecData       [1] =   -200.0      ;
     //IP->TargetPositionVector->VecData       [2] =   -350.0      ;
 
@@ -135,7 +135,7 @@ int main()
     // ********************************************************************
     // Specifying the minimum synchronization time
 
-    IP->MinimumSynchronizationTime              =   10.0         ;
+    IP->MinimumSynchronizationTime              =   6.0         ;
 
     // ********************************************************************
     // Checking the input parameters (optional)
@@ -159,6 +159,7 @@ int main()
             printf("An error occurred (%d).\n", ResultValue );
             break;
         }
+
 
         printf("%10.4lf ", OP->NewPositionVector->VecData[j]*RAD2DEG);
         printf("%10.4lf ", OP->NewVelocityVector->VecData[j]);

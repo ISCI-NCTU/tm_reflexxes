@@ -553,7 +553,7 @@ int main(int argc, char **argv)
 
             while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
             {
-                if (kbhit())
+                /*if (kbhit())
                 {
                     c = getchar();
                     if (c == 'q' || c == 'Q')
@@ -562,7 +562,7 @@ int main(int argc, char **argv)
                         TmRobot.setRobotStop();
                         break;
                     }
-                }
+                }*/
 
                 ResultValue =  RML->RMLPosition(*IP, OP, Flags );
 
@@ -572,8 +572,14 @@ int main(int argc, char **argv)
                     break;
                 }
 
+
+                time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
+                time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
+                time_s = TmRobot.interface->stateRT->getQtAct(CurrentAcceleration);
+                printf("%lf %10.4lf %10.4lf %10.4lf | ",time_s, CurrentPosition[4], CurrentVelocity[4], CurrentPosition[4]);
+
                 vec = {0,0,0,0, OP->NewVelocityVector->VecData[0] ,0};
-                printf("%10.4lf ", OP->NewPositionVector->VecData[0]*RAD2DEG);
+                printf("%10.4lf ", OP->NewPositionVector->VecData[0]);
                 printf("%10.4lf ", OP->NewVelocityVector->VecData[0]);
                 printf("%10.4lf ", OP->NewAccelerationVector->VecData[0]);
                 //printf("%10.3f ", ++cycle_iteration*0.025 );
@@ -581,13 +587,15 @@ int main(int argc, char **argv)
 
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                record_state(TmRobot, temp_time, temp_vec1, temp_vec2, temp_vec3);
-                time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
-                printf("%10.41f %lf", CurrentPosition[4]*RAD2DEG, time_s);
-                /*time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
-                time_s = TmRobot.interface->stateRT->getQtAct(CurrentAcceleration);*/
+                //record_state(TmRobot, temp_time, temp_vec1, temp_vec2, temp_vec3);
 
-                //IP->CurrentPositionVector->VecData[0] =  CurrentPosition[4];
+                //time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
+                //time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
+                //time_s = TmRobot.interface->stateRT->getQtAct(CurrentAcceleration);
+                //printf("%lf %10.4lf %10.4lf %10.4lf",time_s, CurrentPosition[4]*RAD2DEG, CurrentVelocity[4], CurrentPosition[4]);
+                //OP->NewPositionVector->VecData[0] = CurrentPosition[4];
+
+                //OP->NewVelocityVector->VecData[0] = CurrentVelocity[4];
                 *IP->CurrentPositionVector =  *OP->NewPositionVector;
                 *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
                 *IP->CurrentAccelerationVector =  *OP->NewAccelerationVector; 
