@@ -155,6 +155,16 @@ bool TmDriver::setCommandMsg(std::string& cmd_msg)
     return (interface->sendCommandMsg(cmd_msg.c_str()) > 0);
 }
 
+bool TmDriver::setCommandMsg_jointspd(std::string& cmd_msg)
+{
+    unsigned int n = (unsigned int)cmd_msg.length();
+    if (n == 0 || n >= g_tmcom_max_command_size)
+    {
+        return false;
+    }
+    return (interface->sendCommandMsg(cmd_msg.c_str()) > 0);
+}
+
 bool TmDriver::setRobotRun()
 {
     return (interface->sendCommandMsg("run") > 0);
@@ -202,7 +212,7 @@ bool TmDriver::setMoveJointSpeedabs(const std::vector<double>& q, double blend)
         snprintf(var_str, 16, "%.1f ", 100.0f * (float)blend);
         cmd_msg += var_str;
     }
-    return setCommandMsg(cmd_msg);
+    return setCommandMsg_jointspd(cmd_msg);
 }
 
 bool TmDriver::setMoveJabs(const std::vector<double>& q, double blend)

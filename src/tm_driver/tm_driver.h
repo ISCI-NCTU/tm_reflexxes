@@ -106,6 +106,7 @@ public:
   
   bool setCommandData(std::string& cmd_name, char* cmd_data);
   bool setCommandMsg(std::string& cmd_msg);
+  bool setCommandMsg_jointspd(std::string& cmd_msg);
 
   bool setRobotRun();
   bool setRobotStopRun();
