@@ -52,6 +52,10 @@
 #include <stdlib.h>
 #include <chrono>
 #include <thread>
+#include <unistd.h>
+#include <sys/time.h>
+#include <iostream>
+
 
 #include <ReflexxesAPI.h>
 #include <RMLPositionFlags.h>
@@ -148,10 +152,20 @@ int main()
     // ********************************************************************
     // Starting the control loop
 
-    int cycle_iteration = 0;
+
+
+    float cycle_iteration = 0;
+    struct timeval tm1, tm3, tm4;
+    struct timeval tm2, tm5;
+
+	gettimeofday(&tm5, NULL);
 
     while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
     {
+
+        gettimeofday(&tm1, NULL);
+	
+
         ResultValue =  RML->RMLPosition(*IP, OP, Flags );
 
         if (ResultValue < 0)
@@ -160,19 +174,28 @@ int main()
             break;
         }
 
-
         printf("%10.4lf ", OP->NewPositionVector->VecData[j]*RAD2DEG);
         printf("%10.4lf ", OP->NewVelocityVector->VecData[j]);
         printf("%10.4lf ", OP->NewAccelerationVector->VecData[j]);
-        printf("[%10.3f ] ", ++cycle_iteration*0.025 );
-        printf("\n");
 
         *IP->CurrentPositionVector =  *OP->NewPositionVector;
         *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
         *IP->CurrentAccelerationVector =  *OP->NewAccelerationVector;
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        
+        gettimeofday(&tm2, NULL);
+        long long t = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);
 
+        usleep(24900-t);
+
+	    gettimeofday(&tm4, NULL);
+   		long long tt = 1000000 * (tm4.tv_sec - tm1.tv_sec) + (tm4.tv_usec - tm1.tv_usec);
+		printf("  cycle time = %llu us \n",tt); 
     }
+
+	gettimeofday(&tm3, NULL);
+	long long ttt = 1000000 * (tm3.tv_sec - tm5.tv_sec) + (tm3.tv_usec - tm5.tv_usec);
+	printf("all time = %llu us \n",ttt); 
+
 
     delete  RML;
     delete  IP;
