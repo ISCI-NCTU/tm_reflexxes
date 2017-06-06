@@ -639,11 +639,6 @@ int main(int argc, char **argv)
                     printf("An error occurred (%d).\n", ResultValue );
                     break;
                 }
-
-//                time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
-//                time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
-//                printf("NOW : %lf %10.4lf %10.4lf  ",time_s, CurrentPosition[4], CurrentVelocity[4]);
-
                 vec = { OP->NewVelocityVector->VecData[0],
                         OP->NewVelocityVector->VecData[1],
                         OP->NewVelocityVector->VecData[2],
@@ -652,9 +647,6 @@ int main(int argc, char **argv)
                         OP->NewVelocityVector->VecData[5]};
 
                 TmRobot.setMoveJointSpeedabs(vec, blend);
-
-//                printf(" | CMD : %10.4lf ", OP->NewPositionVector->VecData[0]);
-//                printf("%10.4lf  \n", OP->NewVelocityVector->VecData[0]);
 
                 time_s = TmRobot.interface->stateRT->getTime();
                 printf("[ %lf ] pos:  ",time_s );
