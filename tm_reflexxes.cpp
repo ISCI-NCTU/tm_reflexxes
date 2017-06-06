@@ -49,6 +49,8 @@
 #include <termios.h>
 #include <math.h>
 #include <iostream>
+#include <sys/time.h>
+#include <unistd.h>
 
 #define DEG2RAD 0.01745329252
 #define RAD2DEG 57.29577951
@@ -60,6 +62,8 @@ using namespace std;
 
 static struct termios oldt, newt;
 FILE *tm_record;
+clock_t time_begin, time_end;
+double time_elapsed;
 /* Initialize new terminal i/o settings */
 void initTermios(int echo)
 {
@@ -515,6 +519,7 @@ int main(int argc, char **argv)
             std::vector<double> temp_vec1, temp_vec2, temp_vec3;
 
 
+
             int ResultValue = 0;
             int i = 0;
             int j = 0;
@@ -541,7 +546,7 @@ int main(int argc, char **argv)
             IP->TargetVelocityVector->VecData[0] = 0.0;
             IP->SelectionVector->VecData[0] = true;
 
-            IP->MinimumSynchronizationTime = 6.0;
+            IP->MinimumSynchronizationTime = 5.0;
 
             if (IP->CheckForValidity())
                 printf("Input values are valid!\n");
@@ -550,10 +555,25 @@ int main(int argc, char **argv)
 
             int cycle_iteration = 0;
             tm_record = fopen("tm5_state.txt", "w");
+            
+            struct timeval tm1, tm3, tm4;
+            struct timeval tm2, tm5;
+
+            long long time_compensation_eachcycle = 0;
+
 
             while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
             {
-                /*if (kbhit())
+                /********************************************************
+                /********************************************************
+                
+                // The area execution in 25ms real time sharp
+                
+                /*******************************************************/
+                /*******************************************************/
+
+                gettimeofday(&tm1, NULL); 
+                if (kbhit())
                 {
                     c = getchar();
                     if (c == 'q' || c == 'Q')
@@ -562,7 +582,7 @@ int main(int argc, char **argv)
                         TmRobot.setRobotStop();
                         break;
                     }
-                }*/
+                }
 
                 ResultValue =  RML->RMLPosition(*IP, OP, Flags );
 
@@ -572,35 +592,42 @@ int main(int argc, char **argv)
                     break;
                 }
 
-
                 time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
                 time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
-                time_s = TmRobot.interface->stateRT->getQtAct(CurrentAcceleration);
-                printf("%lf %10.4lf %10.4lf %10.4lf | ",time_s, CurrentPosition[4], CurrentVelocity[4], CurrentPosition[4]);
+                printf("NOW : %lf %10.4lf %10.4lf  ",time_s, CurrentPosition[4], CurrentVelocity[4]);
 
                 vec = {0,0,0,0, OP->NewVelocityVector->VecData[0] ,0};
-                printf("%10.4lf ", OP->NewPositionVector->VecData[0]);
-                printf("%10.4lf ", OP->NewVelocityVector->VecData[0]);
-                printf("%10.4lf ", OP->NewAccelerationVector->VecData[0]);
-                //printf("%10.3f ", ++cycle_iteration*0.025 );
                 TmRobot.setMoveJointSpeedabs(vec, blend);
 
+                printf(" | CMD : %10.4lf ", OP->NewPositionVector->VecData[0]);
+                printf("%10.4lf  ", OP->NewVelocityVector->VecData[0]);
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                //record_state(TmRobot, temp_time, temp_vec1, temp_vec2, temp_vec3);
-
-                //time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
-                //time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
-                //time_s = TmRobot.interface->stateRT->getQtAct(CurrentAcceleration);
-                //printf("%lf %10.4lf %10.4lf %10.4lf",time_s, CurrentPosition[4]*RAD2DEG, CurrentVelocity[4], CurrentPosition[4]);
-                //OP->NewPositionVector->VecData[0] = CurrentPosition[4];
-
-                //OP->NewVelocityVector->VecData[0] = CurrentVelocity[4];
                 *IP->CurrentPositionVector =  *OP->NewPositionVector;
                 *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
                 *IP->CurrentAccelerationVector =  *OP->NewAccelerationVector; 
 
+                gettimeofday(&tm2, NULL);
+                long long time_compensation = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);            
+                usleep(24920 - time_compensation);
+                
+                /********************************************************
+                /********************************************************
+                
+                // The area execution in 25ms real time sharp
+                
+                /*******************************************************/
+                /*******************************************************/
+                
+                gettimeofday(&tm4, NULL);
+                long long tt = 1000000 * (tm4.tv_sec - tm1.tv_sec) + (tm4.tv_usec - tm1.tv_usec);
+                printf("  cycle time = %llu us  \n",tt); 
             }
+
+            time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
+            time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
+            printf("========================================\n");
+            printf("Final state : %lf %10.4lf %10.4lf  \n",time_s, CurrentPosition[4], CurrentVelocity[4]);
+
             resetTermios();
             TmRobot.setJointSpdModeoOFF();
             print_info("joint vlocity control mode OFF...");
