@@ -56,7 +56,10 @@
 #define RAD2DEG 57.29577951
 
 #define CYCLE_TIME_IN_SECONDS 0.025
-#define NUMBER_OF_DOFS 1
+#define NUMBER_OF_DOFS 6
+
+#define MAX_VELOCITY 1.0
+#define MAX_ACC 1.5
 
 using namespace std;
 
@@ -535,18 +538,62 @@ int main(int argc, char **argv)
             OP = new RMLPositionOutputParameters(NUMBER_OF_DOFS);
 
             IP->CurrentPositionVector->VecData[0] = 0.0;
+            IP->CurrentPositionVector->VecData[1] = 0.0;
+            IP->CurrentPositionVector->VecData[2] = 0.0;
+            IP->CurrentPositionVector->VecData[3] = 0.0;
+            IP->CurrentPositionVector->VecData[4] = 0.0;
+            IP->CurrentPositionVector->VecData[5] = 0.0;
+
             IP->CurrentVelocityVector->VecData[0] = 0.0;
+            IP->CurrentVelocityVector->VecData[1] = 0.0;
+            IP->CurrentVelocityVector->VecData[2] = 0.0;
+            IP->CurrentVelocityVector->VecData[3] = 0.0;
+            IP->CurrentVelocityVector->VecData[4] = 0.0;
+            IP->CurrentVelocityVector->VecData[5] = 0.0;
+
             IP->CurrentAccelerationVector->VecData[0] = 0.0;
+            IP->CurrentAccelerationVector->VecData[1] = 0.0;
+            IP->CurrentAccelerationVector->VecData[2] = 0.0;
+            IP->CurrentAccelerationVector->VecData[3] = 0.0;
+            IP->CurrentAccelerationVector->VecData[4] = 0.0;
+            IP->CurrentAccelerationVector->VecData[5] = 0.0;
 
-            IP->MaxVelocityVector->VecData[0] = 0.3247;
-            IP->MaxAccelerationVector->VecData[0] = 0.6494;
-            IP->MaxJerkVector->VecData[0] = 141.004;
+            IP->MaxVelocityVector->VecData[0] = MAX_VELOCITY; //0.3247
+            IP->MaxVelocityVector->VecData[1] = MAX_VELOCITY; //0.3247
+            IP->MaxVelocityVector->VecData[2] = MAX_VELOCITY; //0.3247
+            IP->MaxVelocityVector->VecData[3] = MAX_VELOCITY; //0.3247
+            IP->MaxVelocityVector->VecData[4] = MAX_VELOCITY; //0.3247
+            IP->MaxVelocityVector->VecData[5] = MAX_VELOCITY; //0.3247
 
-            IP->TargetPositionVector->VecData[0] = 1.57;
+            IP->MaxAccelerationVector->VecData[0] = MAX_ACC;
+            IP->MaxAccelerationVector->VecData[1] = MAX_ACC;
+            IP->MaxAccelerationVector->VecData[2] = MAX_ACC;
+            IP->MaxAccelerationVector->VecData[3] = MAX_ACC;
+            IP->MaxAccelerationVector->VecData[4] = MAX_ACC;
+            IP->MaxAccelerationVector->VecData[5] = MAX_ACC;
+
+            IP->TargetPositionVector->VecData[0] = 0.0;
+            IP->TargetPositionVector->VecData[1] = 0.0;
+            IP->TargetPositionVector->VecData[2] = 1.57;
+            IP->TargetPositionVector->VecData[3] = -1.57;
+            IP->TargetPositionVector->VecData[4] = 1.57;
+            IP->TargetPositionVector->VecData[5] = 0.0;
+
             IP->TargetVelocityVector->VecData[0] = 0.0;
-            IP->SelectionVector->VecData[0] = true;
+            IP->TargetVelocityVector->VecData[1] = 0.0;
+            IP->TargetVelocityVector->VecData[2] = 0.0;
+            IP->TargetVelocityVector->VecData[3] = 0.0;
+            IP->TargetVelocityVector->VecData[4] = 0.0;
+            IP->TargetVelocityVector->VecData[5] = 0.0;
 
-            IP->MinimumSynchronizationTime = 5.0;
+            IP->SelectionVector->VecData[0] = false;
+            IP->SelectionVector->VecData[1] = false;
+            IP->SelectionVector->VecData[2] = true;
+            IP->SelectionVector->VecData[3] = true;
+            IP->SelectionVector->VecData[4] = true;
+            IP->SelectionVector->VecData[5] = false;
+
+            //IP->MinimumSynchronizationTime = 3.0;
 
             if (IP->CheckForValidity())
                 printf("Input values are valid!\n");
@@ -560,6 +607,8 @@ int main(int argc, char **argv)
             struct timeval tm2, tm5;
 
             long long time_compensation_eachcycle = 0;
+
+            gettimeofday(&tm3, NULL);
 
 
             while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
@@ -592,23 +641,44 @@ int main(int argc, char **argv)
                     break;
                 }
 
-                time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
-                time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
-                printf("NOW : %lf %10.4lf %10.4lf  ",time_s, CurrentPosition[4], CurrentVelocity[4]);
+//                time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
+//                time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
+//                printf("NOW : %lf %10.4lf %10.4lf  ",time_s, CurrentPosition[4], CurrentVelocity[4]);
 
-                vec = {0,0,0,0, OP->NewVelocityVector->VecData[0] ,0};
+                vec = { OP->NewVelocityVector->VecData[0],
+                        OP->NewVelocityVector->VecData[1],
+                        OP->NewVelocityVector->VecData[2],
+                        OP->NewVelocityVector->VecData[3],
+                        OP->NewVelocityVector->VecData[4],
+                        OP->NewVelocityVector->VecData[5]};
+
                 TmRobot.setMoveJointSpeedabs(vec, blend);
 
-                printf(" | CMD : %10.4lf ", OP->NewPositionVector->VecData[0]);
-                printf("%10.4lf  ", OP->NewVelocityVector->VecData[0]);
+//                printf(" | CMD : %10.4lf ", OP->NewPositionVector->VecData[0]);
+//                printf("%10.4lf  \n", OP->NewVelocityVector->VecData[0]);
+
+                time_s = TmRobot.interface->stateRT->getTime();
+                printf("[ %lf ]  ",time_s );
+
+                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                {
+                    printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
+                }
+
+                printf(" | ");
+
+                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                {
+                    printf("%10.4lf ", OP->NewVelocityVector->VecData[i]);
+                }
+                printf("\n");
 
                 *IP->CurrentPositionVector =  *OP->NewPositionVector;
                 *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
-                *IP->CurrentAccelerationVector =  *OP->NewAccelerationVector; 
 
                 gettimeofday(&tm2, NULL);
                 long long time_compensation = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);            
-                usleep(24920 - time_compensation);
+                usleep(24940 - time_compensation);  // 24920 is tuning parameter, since usleep(25000) isn't exactly 25ms
                 
                 /********************************************************
                 /********************************************************
@@ -617,16 +687,21 @@ int main(int argc, char **argv)
                 
                 /*******************************************************/
                 /*******************************************************/
-                
-                gettimeofday(&tm4, NULL);
-                long long tt = 1000000 * (tm4.tv_sec - tm1.tv_sec) + (tm4.tv_usec - tm1.tv_usec);
-                printf("  cycle time = %llu us  \n",tt); 
             }
+
+            gettimeofday(&tm4, NULL);
+            long long tt = 1000000 * (tm4.tv_sec - tm3.tv_sec) + (tm4.tv_usec - tm3.tv_usec);
 
             time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
             time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
-            printf("========================================\n");
-            printf("Final state : %lf %10.4lf %10.4lf  \n",time_s, CurrentPosition[4], CurrentVelocity[4]);
+            printf("=============== Final state =========================\n");
+            printf("[ %lf ]  ", time_s);
+
+            for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                printf(" %10.4lf ",CurrentPosition[i]);
+
+            printf("\n");
+            print_info("Finished in %llu us", tt);
 
             resetTermios();
             TmRobot.setJointSpdModeoOFF();

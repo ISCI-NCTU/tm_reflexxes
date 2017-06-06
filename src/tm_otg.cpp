@@ -67,9 +67,23 @@
 // defines
 
 #define CYCLE_TIME_IN_SECONDS                   0.025
-#define NUMBER_OF_DOFS                          1
+#define NUMBER_OF_DOFS                          6
 #define DEG2RAD 0.01745329252
 #define RAD2DEG 57.29577951
+
+#define MAX_VELOCITY 1.0
+#define MAX_ACC 1.5
+
+double cubic_polynomial(double time_stamp)
+{
+    double a = -0.1163;
+    double b = 0.523;
+    double qd;
+
+    qd = 3*a*time_stamp*time_stamp + 2*b*time_stamp;
+
+    return qd;
+}
 
 int main()
 {
@@ -100,46 +114,66 @@ int main()
     OP = new RMLPositionOutputParameters(NUMBER_OF_DOFS);
 
 
-    IP->CurrentPositionVector->VecData      [0] =    0.0      ;
-    //IP->CurrentPositionVector->VecData      [1] =      0.0      ;
-    //IP->CurrentPositionVector->VecData      [2] =     50.0      ;
+    IP->CurrentPositionVector->VecData[0] = 0.0;
+    IP->CurrentPositionVector->VecData[1] = 0.0;
+    IP->CurrentPositionVector->VecData[2] = 0.0;
+    IP->CurrentPositionVector->VecData[3] = 0.0;
+    IP->CurrentPositionVector->VecData[4] = 0.0;
+    IP->CurrentPositionVector->VecData[5] = 0.0;
 
-    IP->CurrentVelocityVector->VecData      [0] =    0.0      ;
-    //IP->CurrentVelocityVector->VecData      [1] =   -220.0      ;
-    //IP->CurrentVelocityVector->VecData      [2] =    -50.0      ;
+    IP->CurrentVelocityVector->VecData[0] = 0.0;
+    IP->CurrentVelocityVector->VecData[1] = 0.0;
+    IP->CurrentVelocityVector->VecData[2] = 0.0;
+    IP->CurrentVelocityVector->VecData[3] = 0.0;
+    IP->CurrentVelocityVector->VecData[4] = 0.0;
+    IP->CurrentVelocityVector->VecData[5] = 0.0;
 
-    IP->CurrentAccelerationVector->VecData  [0] =   0.0      ;
-    //IP->CurrentAccelerationVector->VecData  [1] =    250.0      ;
-    //IP->CurrentAccelerationVector->VecData  [2] =    -50.0      ;
+    IP->CurrentAccelerationVector->VecData[0] = 0.0;
+    IP->CurrentAccelerationVector->VecData[1] = 0.0;
+    IP->CurrentAccelerationVector->VecData[2] = 0.0;
+    IP->CurrentAccelerationVector->VecData[3] = 0.0;
+    IP->CurrentAccelerationVector->VecData[4] = 0.0;
+    IP->CurrentAccelerationVector->VecData[5] = 0.0;
 
-    IP->MaxVelocityVector->VecData          [0] =    0.3247      ;
-    //IP->MaxVelocityVector->VecData          [1] =    100.0      ;
-    //IP->MaxVelocityVector->VecData          [2] =    300.0      ;
+    IP->MaxVelocityVector->VecData[0] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[1] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[2] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[3] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[4] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[5] = MAX_VELOCITY; //0.3247
 
-    IP->MaxAccelerationVector->VecData      [0] =     0.6494;
-    //IP->MaxAccelerationVector->VecData      [1] =    200.0      ;
-    //IP->MaxAccelerationVector->VecData      [2] =    100.0      ;
+    IP->MaxAccelerationVector->VecData[0] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[1] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[2] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[3] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[4] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[5] = MAX_ACC;
 
-    IP->MaxJerkVector->VecData              [0] =    141.004     ;
-    //IP->MaxJerkVector->VecData              [1] =    300.0      ;
-    //IP->MaxJerkVector->VecData              [2] =    200.0      ;
+    IP->TargetPositionVector->VecData[0] = 0.0;
+    IP->TargetPositionVector->VecData[1] = 0.0;
+    IP->TargetPositionVector->VecData[2] = 1.57;
+    IP->TargetPositionVector->VecData[3] = -1.57;
+    IP->TargetPositionVector->VecData[4] = 1.57;
+    IP->TargetPositionVector->VecData[5] = 0.0;
 
-    IP->TargetPositionVector->VecData       [0] =   -1.57      ;
-    //IP->TargetPositionVector->VecData       [1] =   -200.0      ;
-    //IP->TargetPositionVector->VecData       [2] =   -350.0      ;
+    IP->TargetVelocityVector->VecData[0] = 0.0;
+    IP->TargetVelocityVector->VecData[1] = 0.0;
+    IP->TargetVelocityVector->VecData[2] = 0.0;
+    IP->TargetVelocityVector->VecData[3] = 0.0;
+    IP->TargetVelocityVector->VecData[4] = 0.0;
+    IP->TargetVelocityVector->VecData[5] = 0.0;
 
-    IP->TargetVelocityVector->VecData       [0] =    0.0       ;
-    //IP->TargetVelocityVector->VecData       [1] =   -50.0       ;
-    //IP->TargetVelocityVector->VecData       [2] =  -200.0       ;
-
-    IP->SelectionVector->VecData            [0] =   true        ;
-    //IP->SelectionVector->VecData            [1] =   true        ;
-    //IP->SelectionVector->VecData            [2] =   true        ;
+    IP->SelectionVector->VecData[0] = false;
+    IP->SelectionVector->VecData[1] = false;
+    IP->SelectionVector->VecData[2] = false;
+    IP->SelectionVector->VecData[3] = false;
+    IP->SelectionVector->VecData[4] = true;
+    IP->SelectionVector->VecData[5] = false;
 
     // ********************************************************************
     // Specifying the minimum synchronization time
 
-    IP->MinimumSynchronizationTime              =   6.0         ;
+    IP->MinimumSynchronizationTime              =   2.0         ;
 
     // ********************************************************************
     // Checking the input parameters (optional)
@@ -163,9 +197,8 @@ int main()
     while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
     {
 
-        gettimeofday(&tm1, NULL);
+        //gettimeofday(&tm1, NULL);
 	
-
         ResultValue =  RML->RMLPosition(*IP, OP, Flags );
 
         if (ResultValue < 0)
@@ -174,14 +207,28 @@ int main()
             break;
         }
 
-        printf("%10.4lf ", OP->NewPositionVector->VecData[j]*RAD2DEG);
-        printf("%10.4lf ", OP->NewVelocityVector->VecData[j]);
-        printf("%10.4lf ", OP->NewAccelerationVector->VecData[j]);
+        double timenow = cycle_iteration++*0.025;
+        //ouble jpd = cubic_polynomial(timenow);
+
+        printf(" [%.3f] ",timenow);
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+        {
+            printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
+        }
+
+        printf(" | ");
+
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+        {
+            printf("%10.4lf ", OP->NewVelocityVector->VecData[i]);
+        }
+        printf("\n");
+
 
         *IP->CurrentPositionVector =  *OP->NewPositionVector;
         *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
-        *IP->CurrentAccelerationVector =  *OP->NewAccelerationVector;
-        
+        //usleep(25000);
+        /*
         gettimeofday(&tm2, NULL);
         long long t = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);
 
@@ -189,7 +236,7 @@ int main()
 
 	    gettimeofday(&tm4, NULL);
    		long long tt = 1000000 * (tm4.tv_sec - tm1.tv_sec) + (tm4.tv_usec - tm1.tv_usec);
-		printf("  cycle time = %llu us \n",tt); 
+		printf("  cycle time = %llu us \n",tt); */
     }
 
 	gettimeofday(&tm3, NULL);
