@@ -601,7 +601,6 @@ int main(int argc, char **argv)
                 printf("Input values are INVALID!\n");
 
             int cycle_iteration = 0;
-            tm_record = fopen("tm5_state.txt", "w");
             
             struct timeval tm1, tm3, tm4;
             struct timeval tm2, tm5;
@@ -658,14 +657,14 @@ int main(int argc, char **argv)
 //                printf("%10.4lf  \n", OP->NewVelocityVector->VecData[0]);
 
                 time_s = TmRobot.interface->stateRT->getTime();
-                printf("[ %lf ]  ",time_s );
+                printf("[ %lf ] pos:  ",time_s );
 
                 for (int i = 0; i < NUMBER_OF_DOFS; ++i)
                 {
                     printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
                 }
 
-                printf(" | ");
+                printf(" | spd: ");
 
                 for (int i = 0; i < NUMBER_OF_DOFS; ++i)
                 {
