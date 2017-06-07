@@ -314,7 +314,8 @@ bool Reflexxes_position_run(std::vector<double> CurrentPosition, std::vector<dou
     return pass;
 }
 
-int main()
+
+int main(int argc, char const *argv[])
 {
     print_info("joint velocity control mode ON...");
     bool run_succeed = true;
