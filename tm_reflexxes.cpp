@@ -39,6 +39,19 @@
  * limitations under the License.
  **********************************************************************/
 
+/*******************************
+TODO :
+
+** Modullize Reflexxes_position_run()
+1. Position input use joint position.
+2. Position use cartesian position(import T).
+
+** Create Reflexxes_velocity_run()
+1. Velocity input use joint space.
+2. Velocity use cartesian space(import jacobian)
+
+*********************************/
+
 #include "src/tm_driver/tm_driver.h"
 
 #include <ReflexxesAPI.h>
@@ -64,9 +77,6 @@
 using namespace std;
 
 static struct termios oldt, newt;
-FILE *tm_record;
-clock_t time_begin, time_end;
-double time_elapsed;
 /* Initialize new terminal i/o settings */
 void initTermios(int echo)
 {
@@ -103,23 +113,7 @@ void print_vectord(const std::vector<double>& vec)
     printf("%.4f", vec[vec.size() - 1]);
 }
 
-void record_state(const TmDriver& TR, double& time_s, std::vector<double>& vec1, std::vector<double>& vec2, std::vector<double>& vec3)
-{
-    time_s = TR.interface->stateRT->getQAct(vec1);
-    time_s = TR.interface->stateRT->getQdAct(vec2);
-    time_s = TR.interface->stateRT->getQtAct(vec3);
-    fprintf(tm_record, " %.3f %.4f %.4f %.4f %.4f %.4f %.4f | %.4f %.4f %.4f %.4f %.4f %.4f | %.4f %.4f %.4f %.4f %.4f %.4f\n",
-            time_s,
-            vec1[0], vec1[1], vec1[2], vec1[3], vec1[4], vec1[5],
-            vec2[0], vec2[1], vec2[2], vec2[3], vec2[4], vec2[5],
-            vec3[0], vec3[1], vec3[2], vec3[3], vec3[4], vec3[5] );
-    /*printf("[ INFO] %.3f %.4f %.4f %.4f %.4f %.4f %.4f | %.4f %.4f %.4f %.4f %.4f %.4f | %.4f %.4f %.4f %.4f %.4f %.4f\n",
-           time_s,
-           vec1[0], vec1[1], vec1[2], vec1[3], vec1[4], vec1[5],
-           vec2[0], vec2[1], vec2[2], vec2[3], vec2[4], vec2[5],
-           vec3[0], vec3[1], vec3[2], vec3[3], vec3[4], vec3[5] );
-*/
-}
+
 void print_rt_1(const TmDriver& TR, double& time_s, std::vector<double>& vec)
 {
     time_s = TR.interface->stateRT->getQAct(vec);
@@ -288,6 +282,196 @@ std::vector<double> parse_cmd(char* cstr, const char* delim, double& res)
     return ret;
 }
 
+bool Reflexxes_position_run(TmDriver& TR, std::vector<double> TargetPosition, double synTime)
+{
+    double blend = 0, time_s;
+    std::vector<double> vec, CurrentPosition, FinalPosition;
+    bool pass = true;
+
+    ReflexxesAPI *RML = NULL    ;
+    RMLPositionInputParameters  *IP = NULL;
+    RMLPositionOutputParameters *OP = NULL;
+    RMLPositionFlags Flags;
+    int ResultValue = 0;
+
+
+    initTermios(1);
+
+    RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
+    IP = new RMLPositionInputParameters(NUMBER_OF_DOFS);
+    OP = new RMLPositionOutputParameters(NUMBER_OF_DOFS);
+
+    time_s = TR.interface->stateRT->getQAct(CurrentPosition);
+
+
+    // ********************************************************************/
+    // Creating all relevant objects of the Type II Reflexxes Motion Library*/
+
+    IP->CurrentPositionVector->VecData[0] = CurrentPosition[0];
+    IP->CurrentPositionVector->VecData[1] = CurrentPosition[1];
+    IP->CurrentPositionVector->VecData[2] = CurrentPosition[2];
+    IP->CurrentPositionVector->VecData[3] = CurrentPosition[3];
+    IP->CurrentPositionVector->VecData[4] = CurrentPosition[4];
+    IP->CurrentPositionVector->VecData[5] = CurrentPosition[5];
+
+    IP->CurrentVelocityVector->VecData[0] = 0.0;
+    IP->CurrentVelocityVector->VecData[1] = 0.0;
+    IP->CurrentVelocityVector->VecData[2] = 0.0;
+    IP->CurrentVelocityVector->VecData[3] = 0.0;
+    IP->CurrentVelocityVector->VecData[4] = 0.0;
+    IP->CurrentVelocityVector->VecData[5] = 0.0;
+
+    IP->CurrentAccelerationVector->VecData[0] = 0.0;
+    IP->CurrentAccelerationVector->VecData[1] = 0.0;
+    IP->CurrentAccelerationVector->VecData[2] = 0.0;
+    IP->CurrentAccelerationVector->VecData[3] = 0.0;
+    IP->CurrentAccelerationVector->VecData[4] = 0.0;
+    IP->CurrentAccelerationVector->VecData[5] = 0.0;
+
+    IP->MaxVelocityVector->VecData[0] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[1] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[2] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[3] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[4] = MAX_VELOCITY; //0.3247
+    IP->MaxVelocityVector->VecData[5] = MAX_VELOCITY; //0.3247
+
+    IP->MaxAccelerationVector->VecData[0] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[1] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[2] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[3] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[4] = MAX_ACC;
+    IP->MaxAccelerationVector->VecData[5] = MAX_ACC;
+
+    IP->TargetPositionVector->VecData[0] = TargetPosition[0];
+    IP->TargetPositionVector->VecData[1] = TargetPosition[1];
+    IP->TargetPositionVector->VecData[2] = TargetPosition[2];
+    IP->TargetPositionVector->VecData[3] = TargetPosition[3];
+    IP->TargetPositionVector->VecData[4] = TargetPosition[4];
+    IP->TargetPositionVector->VecData[5] = TargetPosition[5];
+
+    IP->TargetVelocityVector->VecData[0] = 0.0;
+    IP->TargetVelocityVector->VecData[1] = 0.0;
+    IP->TargetVelocityVector->VecData[2] = 0.0;
+    IP->TargetVelocityVector->VecData[3] = 0.0;
+    IP->TargetVelocityVector->VecData[4] = 0.0;
+    IP->TargetVelocityVector->VecData[5] = 0.0;
+
+    IP->SelectionVector->VecData[0] = true;
+    IP->SelectionVector->VecData[1] = true;
+    IP->SelectionVector->VecData[2] = true;
+    IP->SelectionVector->VecData[3] = true;
+    IP->SelectionVector->VecData[4] = true;
+    IP->SelectionVector->VecData[5] = false;
+
+    IP->MinimumSynchronizationTime = synTime;
+
+    // ********************************************************************
+
+
+    if (IP->CheckForValidity())
+        printf("Input values are valid!\n");
+    else
+    {
+        printf("Input values are INVALID!\n");
+        pass = false;
+    }
+
+
+    struct timeval tm1,tm2, tm3, tm4;
+
+    gettimeofday(&tm3, NULL);
+
+    while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
+    {
+        //********************************************************
+        // The area execution in 25ms real time sharp
+
+        gettimeofday(&tm1, NULL); 
+        if (kbhit())
+        {
+            char c = getchar();
+            if (c == 'q' || c == 'Q')
+            {
+                print_info("stop...");
+                TR.setRobotStop();
+                pass = false;
+                break;
+            }
+        }
+
+        ResultValue =  RML->RMLPosition(*IP, OP, Flags );
+
+        if (ResultValue < 0)
+        {
+            printf("An error occurred (%d).\n", ResultValue );
+            break;
+        }
+        vec = { OP->NewVelocityVector->VecData[0],
+                OP->NewVelocityVector->VecData[1],
+                OP->NewVelocityVector->VecData[2],
+                OP->NewVelocityVector->VecData[3],
+                OP->NewVelocityVector->VecData[4],
+                OP->NewVelocityVector->VecData[5]};
+
+        TR.setMoveJointSpeedabs(vec, blend);
+
+        //***************************************************************
+        // Print out commands
+
+        time_s = TR.interface->stateRT->getTime();
+        printf("[ %lf ] pos:  ",time_s );
+
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+        {
+            printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
+        }
+
+        printf(" | spd: ");
+
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+        {
+            printf("%10.4lf ", OP->NewVelocityVector->VecData[i]);
+        }
+        printf("\n");
+
+        //***************************************************************
+
+
+        *IP->CurrentPositionVector =  *OP->NewPositionVector;
+        *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
+
+        gettimeofday(&tm2, NULL);
+        long long time_compensation = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);            
+        usleep(24940 - time_compensation);  
+
+        //********************************************************
+        // The area execution in 25ms real time sharp
+    }
+
+    gettimeofday(&tm4, NULL);
+    long long tt = 1000000 * (tm4.tv_sec - tm3.tv_sec) + (tm4.tv_usec - tm3.tv_usec);
+
+
+
+    time_s = TR.interface->stateRT->getQAct(FinalPosition);
+    printf("=============== Final state =========================\n");
+    printf("[ %lf ]  ", time_s);
+
+    for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+        printf(" %10.4lf ",FinalPosition[i]);
+
+    printf("\n");
+    print_info("Finished in %llu us", tt);
+
+    resetTermios();
+
+    delete  RML;
+    delete  IP;
+    delete  OP;
+
+    return pass;
+}
+
 int main(int argc, char **argv)
 {
 
@@ -343,37 +527,6 @@ int main(int argc, char **argv)
             TmRobot.interface->halt();
             fgRun = false;
         }
-        else if (strncmp(cstr, "writetofile", 11) == 0)
-        {
-            print_info("recording...");
-            double temp_time;
-            std::vector<double> temp_vec1, temp_vec2, temp_vec3;
-            initTermios(1);
-
-            tm_record = fopen("record_state.txt", "w");
-
-            if (tm_record)
-            {
-                while (1)
-                {
-                    if (kbhit())
-                    {
-                        c = getchar();
-                        if (c == 'q' || c == 'Q')
-                            break;
-                    }
-                    record_state(TmRobot, temp_time, temp_vec1, temp_vec2, temp_vec3);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                }
-                resetTermios();
-                printf("\n");
-            }
-            else
-            {
-                printf("[ INFO] file open fail\n");
-            }
-            fclose(tm_record);
-        }
         else if(strncmp(cstr, "home", 4) == 0)
         {
             double blend = 0;
@@ -412,385 +565,45 @@ int main(int argc, char **argv)
                 print_rt_9(TmRobot, temp_time);
             }
         }
-        else if (strncmp(cstr, "show", 6) == 0)
-        {
-            char temp_c = '0';
-            double temp_time;
-            std::vector<double> temp_vec;
-            initTermios(1);
-            while (1)
-            {
-                if (kbhit())
-                {
-                    c = getchar();
-                    if (c == 'q' || c == 'Q')
-                        break;
-                    temp_c = c;
-                }
-                switch (temp_c)
-                {
-                default:
-                    temp_time = TmRobot.interface->stateRT->getTime();
-                    printf("[ INFO] [%.3f]\n", temp_time);
-                    break;
-                case '1':
-                    print_rt_1(TmRobot, temp_time, temp_vec);
-                    printf("\n");
-                    break;
-                case '2':
-                    print_rt_2(TmRobot, temp_time, temp_vec);
-                    printf("\n");
-                    break;
-                case '3':
-                    print_rt_3(TmRobot, temp_time, temp_vec);
-                    printf("\n");
-                    break;
-                case '4':
-                    print_rt_4(TmRobot, temp_time, temp_vec);
-                    printf("\n");
-                    break;
-                case '5':
-                    print_rt_5(TmRobot, temp_time, temp_vec);
-                    printf("\n");
-                    break;
-                case '6':
-                    print_rt_6(TmRobot, temp_time, temp_vec);
-                    printf("\n");
-                    break;
-                case '7':
-                    print_rt_7(TmRobot, temp_time, temp_vec);
-                    printf("\n");
-                    break;
-                case '8':
-                    print_rt_8(TmRobot);
-                    printf("\n");
-                    break;
-                case'9':
-                    print_rt_9(TmRobot, temp_time);
-                    printf("\n");
-                    break;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
-            }
-            resetTermios();
-            printf("\n");
-        }
         else if (strncmp(cstr, "clear", 5) == 0)
         {
             system("clear");
-        }
-        else if (strncmp(cstr, "run", 3) == 0)
-        {
-            print_info("run...");
-            TmRobot.setRobotRun();
-        }
-        else if (strncmp(cstr, "stop", 4) == 0)
-        {
-            print_info("stop...");
-            TmRobot.setRobotStop();
-        }
-        else if (strncmp(cstr, "emstop", 6) == 0)
-        {
-            print_info("emergency stop... need input 'run' for resume...");
-            TmRobot.setRobotStopRun();
-        }
-        else if (strncmp(cstr, "jointspdon", 10) == 0)
-        {
-            print_info("joint velocity control mode ON...");
-            TmRobot.setJointSpdModeON();
-        }
-        else if (strncmp(cstr, "jointspdoff", 11) == 0)
-        {
-            print_info("joint vlocity control mode OFF...");
-            TmRobot.setJointSpdModeoOFF();
-        }
-        else if (strncmp(cstr, "movjspd", 7) == 0)
-        {
-            double blend = 0;
-            std::vector<double> vec = parse_cmd(cstr, delim, blend);
-            TmRobot.setMoveJointSpeedabs(vec, blend);
         }
         else if (strncmp(cstr, "gotest", 6) == 0)
         {
             TmRobot.setJointSpdModeON();
             print_info("joint velocity control mode ON...");
+            bool run_succeed = true;
+            double SynchronousTime = 6.0;
+            std::vector<double> TargetPosition;
 
-            double blend = 0;
-            double time_s, temp_time;
-            std::vector<double> vec, temp_vec;
-            std::vector<double> CurrentPosition, CurrentVelocity, CurrentAcceleration;
-            std::vector<double> temp_vec1, temp_vec2, temp_vec3;
-
-
-
-            int ResultValue = 0;
-            int i = 0;
-            int j = 0;
-            ReflexxesAPI *RML = NULL    ;
-            RMLPositionInputParameters  *IP = NULL;
-            RMLPositionOutputParameters *OP = NULL;
-            RMLPositionFlags Flags;
-
-            initTermios(1);
-
-            RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
-            IP = new RMLPositionInputParameters(NUMBER_OF_DOFS);
-            OP = new RMLPositionOutputParameters(NUMBER_OF_DOFS);
-
-            IP->CurrentPositionVector->VecData[0] = 0.0;
-            IP->CurrentPositionVector->VecData[1] = 0.0;
-            IP->CurrentPositionVector->VecData[2] = 0.0;
-            IP->CurrentPositionVector->VecData[3] = 0.0;
-            IP->CurrentPositionVector->VecData[4] = 0.0;
-            IP->CurrentPositionVector->VecData[5] = 0.0;
-
-            IP->CurrentVelocityVector->VecData[0] = 0.0;
-            IP->CurrentVelocityVector->VecData[1] = 0.0;
-            IP->CurrentVelocityVector->VecData[2] = 0.0;
-            IP->CurrentVelocityVector->VecData[3] = 0.0;
-            IP->CurrentVelocityVector->VecData[4] = 0.0;
-            IP->CurrentVelocityVector->VecData[5] = 0.0;
-
-            IP->CurrentAccelerationVector->VecData[0] = 0.0;
-            IP->CurrentAccelerationVector->VecData[1] = 0.0;
-            IP->CurrentAccelerationVector->VecData[2] = 0.0;
-            IP->CurrentAccelerationVector->VecData[3] = 0.0;
-            IP->CurrentAccelerationVector->VecData[4] = 0.0;
-            IP->CurrentAccelerationVector->VecData[5] = 0.0;
-
-            IP->MaxVelocityVector->VecData[0] = MAX_VELOCITY; //0.3247
-            IP->MaxVelocityVector->VecData[1] = MAX_VELOCITY; //0.3247
-            IP->MaxVelocityVector->VecData[2] = MAX_VELOCITY; //0.3247
-            IP->MaxVelocityVector->VecData[3] = MAX_VELOCITY; //0.3247
-            IP->MaxVelocityVector->VecData[4] = MAX_VELOCITY; //0.3247
-            IP->MaxVelocityVector->VecData[5] = MAX_VELOCITY; //0.3247
-
-            IP->MaxAccelerationVector->VecData[0] = MAX_ACC;
-            IP->MaxAccelerationVector->VecData[1] = MAX_ACC;
-            IP->MaxAccelerationVector->VecData[2] = MAX_ACC;
-            IP->MaxAccelerationVector->VecData[3] = MAX_ACC;
-            IP->MaxAccelerationVector->VecData[4] = MAX_ACC;
-            IP->MaxAccelerationVector->VecData[5] = MAX_ACC;
-
-            IP->TargetPositionVector->VecData[0] = 0.0;
-            IP->TargetPositionVector->VecData[1] = 0.0;
-            IP->TargetPositionVector->VecData[2] = 1.57;
-            IP->TargetPositionVector->VecData[3] = -1.57;
-            IP->TargetPositionVector->VecData[4] = 1.57;
-            IP->TargetPositionVector->VecData[5] = 0.0;
-
-            IP->TargetVelocityVector->VecData[0] = 0.0;
-            IP->TargetVelocityVector->VecData[1] = 0.0;
-            IP->TargetVelocityVector->VecData[2] = 0.0;
-            IP->TargetVelocityVector->VecData[3] = 0.0;
-            IP->TargetVelocityVector->VecData[4] = 0.0;
-            IP->TargetVelocityVector->VecData[5] = 0.0;
-
-            IP->SelectionVector->VecData[0] = false;
-            IP->SelectionVector->VecData[1] = false;
-            IP->SelectionVector->VecData[2] = true;
-            IP->SelectionVector->VecData[3] = true;
-            IP->SelectionVector->VecData[4] = true;
-            IP->SelectionVector->VecData[5] = false;
-
-            //IP->MinimumSynchronizationTime = 3.0;
-
-            if (IP->CheckForValidity())
-                printf("Input values are valid!\n");
-            else
-                printf("Input values are INVALID!\n");
-
-            int cycle_iteration = 0;
-            
-            struct timeval tm1, tm3, tm4;
-            struct timeval tm2, tm5;
-
-            long long time_compensation_eachcycle = 0;
-
-            gettimeofday(&tm3, NULL);
-
-
-            while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
+            while(run_succeed)
             {
-                /********************************************************
-                /********************************************************
-                
-                // The area execution in 25ms real time sharp
-                
-                /*******************************************************/
-                /*******************************************************/
-
-                gettimeofday(&tm1, NULL); 
-                if (kbhit())
+                if (run_succeed)
                 {
-                    c = getchar();
-                    if (c == 'q' || c == 'Q')
-                    {
-                        print_info("stop...");
-                        TmRobot.setRobotStop();
-                        break;
-                    }
+                    TargetPosition = {0,0,0,0,1.57,0};
+                    run_succeed = Reflexxes_position_run(TmRobot, TargetPosition, SynchronousTime);
                 }
-
-                ResultValue =  RML->RMLPosition(*IP, OP, Flags );
-
-                if (ResultValue < 0)
-                {
-                    printf("An error occurred (%d).\n", ResultValue );
+                else
                     break;
-                }
-                vec = { OP->NewVelocityVector->VecData[0],
-                        OP->NewVelocityVector->VecData[1],
-                        OP->NewVelocityVector->VecData[2],
-                        OP->NewVelocityVector->VecData[3],
-                        OP->NewVelocityVector->VecData[4],
-                        OP->NewVelocityVector->VecData[5]};
 
-                TmRobot.setMoveJointSpeedabs(vec, blend);
-
-                time_s = TmRobot.interface->stateRT->getTime();
-                printf("[ %lf ] pos:  ",time_s );
-
-                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                if (run_succeed)
                 {
-                    printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
+                    TargetPosition = {0,0,0,0,0,0};
+                    run_succeed = Reflexxes_position_run(TmRobot, TargetPosition, SynchronousTime);
                 }
-
-                printf(" | spd: ");
-
-                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
-                {
-                    printf("%10.4lf ", OP->NewVelocityVector->VecData[i]);
-                }
-                printf("\n");
-
-                *IP->CurrentPositionVector =  *OP->NewPositionVector;
-                *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
-
-                gettimeofday(&tm2, NULL);
-                long long time_compensation = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);            
-                usleep(24940 - time_compensation);  // 24920 is tuning parameter, since usleep(25000) isn't exactly 25ms
-                
-                /********************************************************
-                /********************************************************
-                
-                // The area execution in 25ms real time sharp
-                
-                /*******************************************************/
-                /*******************************************************/
+                else
+                    break;
             }
 
-            gettimeofday(&tm4, NULL);
-            long long tt = 1000000 * (tm4.tv_sec - tm3.tv_sec) + (tm4.tv_usec - tm3.tv_usec);
-
-            time_s = TmRobot.interface->stateRT->getQAct(CurrentPosition);
-            time_s = TmRobot.interface->stateRT->getQdAct(CurrentVelocity);
-            printf("=============== Final state =========================\n");
-            printf("[ %lf ]  ", time_s);
-
-            for (int i = 0; i < NUMBER_OF_DOFS; ++i)
-                printf(" %10.4lf ",CurrentPosition[i]);
-
-            printf("\n");
-            print_info("Finished in %llu us", tt);
-
-            resetTermios();
             TmRobot.setJointSpdModeoOFF();
             print_info("joint vlocity control mode OFF...");
-            fclose(tm_record);
-            delete  RML;
-            delete  IP;
-            delete  OP;
         }
         else if (strncmp(cstr, "movjabs", 7) == 0)
         {
             double blend = 0;
             std::vector<double> vec = parse_cmd(cstr, delim, blend);
             TmRobot.setMoveJabs(vec, blend);
-        }
-        else if (strncmp(cstr, "movjrel", 7) == 0)
-        {
-            double blend = 0;
-            std::vector<double> vec = parse_cmd(cstr, delim, blend);
-            TmRobot.setMoveJrel(vec, blend);
-        }
-        else if (strncmp(cstr, "movlabs", 7) == 0)
-        {
-            double blend = 0;
-            std::vector<double> vec = parse_cmd(cstr, delim, blend);
-            TmRobot.setMoveLabs(vec, blend);
-        }
-        else if (strncmp(cstr, "movlrel", 7) == 0)
-        {
-            double blend = 0;
-            std::vector<double> vec = parse_cmd(cstr, delim, blend);
-            TmRobot.setMoveLrel(vec, blend);
-        }
-        else if (strncmp(cstr, "testservoj", 10) == 0)
-        {
-            int axis = 0;
-            double timeval = 0.01, period = 10.0, amp = M_PI / 6.0, jog_init;
-            float cmd_data[4] = {0, 0, 0, 0};
-            int count = 0;
-            char* pch;
-            char* pch_save;
-            pch = strtok_r(cstr, delim, &pch_save);
-            if (pch != NULL)
-            {
-                while ((pch = strtok_r(NULL, delim, &pch_save)) != NULL)
-                {
-                    if (count < 4)
-                    {
-                        cmd_data[count] = atof(pch);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                    count++;
-                }
-            }
-            if (count > 0)
-                axis = (int)cmd_data[0];
-            if (axis < 0)
-                axis = 0;
-            else if (axis > 6)
-                axis = 6;
-            if (cmd_data[1] != 0)
-                timeval = cmd_data[1];
-            if (cmd_data[2] != 0)
-                period = cmd_data[2];
-            if (cmd_data[3] != 0)
-                amp = cmd_data[3];
-
-            print_info("testservoj start... [q] to quit");
-
-            TmRobot.setServoOpen("srvj");
-
-            std::vector<double> jog_vec;
-            TmRobot.interface->stateRT->getQAct(jog_vec);
-            jog_init = jog_vec[axis];
-
-            count = 0;
-            initTermios(1);
-            while (1)
-            {
-                if (kbhit())
-                {
-                    c = getchar();
-                    if (c == 'q' || c == 'Q')
-                        break;
-                }
-                jog_vec[axis] = jog_init + amp - amp * cos((2.0 * M_PI / period) * timeval * (double)count);
-                TmRobot.setServoj(jog_vec);
-                std::this_thread::sleep_for(std::chrono::milliseconds((int)(timeval * 1000.0)));
-                count++;
-            }
-            resetTermios();
-
-            TmRobot.setServoClose();
-
-            print_info("\ntestservoj stop");
         }
         else
         {
