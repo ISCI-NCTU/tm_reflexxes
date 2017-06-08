@@ -128,10 +128,10 @@ bool VelocityState(RMLVelocityInputParameters &InputState, int joint_num)
     RMLVelocityInputParameters  *IP = NULL;
     IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
     *IP = InputState;
-    if(IP->CurrentVelocityVector->VecData[joint_num] == 0.0)
-        return false;
-    else
+    if(IP->CurrentVelocityVector->VecData[joint_num] != 0.0)
         return true;
+    else
+        return false;
 }
 
 /**********************************************************
@@ -146,7 +146,8 @@ bool VelocityState(RMLVelocityInputParameters &InputState, int joint_num)
 
 bool Reflexxes_velocity_run(    RMLVelocityInputParameters &InputState, 
                                 std::vector<double> TargetVelocity, 
-                                double synTime)
+                                double synTime,
+                                bool already_selected )
 {
     double blend = 0, time_s;
     std::vector<double> vec;
@@ -206,12 +207,15 @@ bool Reflexxes_velocity_run(    RMLVelocityInputParameters &InputState,
     IP->TargetVelocityVector->VecData[4] = TargetVelocity[4];
     IP->TargetVelocityVector->VecData[5] = TargetVelocity[5];
 
-    IP->SelectionVector->VecData[0] = true;
-    IP->SelectionVector->VecData[1] = true;
-    IP->SelectionVector->VecData[2] = true;
-    IP->SelectionVector->VecData[3] = true;
-    IP->SelectionVector->VecData[4] = true;
-    IP->SelectionVector->VecData[5] = false;
+    if(!already_selected)
+    {
+        IP->SelectionVector->VecData[0] = true;
+        IP->SelectionVector->VecData[1] = true;
+        IP->SelectionVector->VecData[2] = true;
+        IP->SelectionVector->VecData[3] = true;
+        IP->SelectionVector->VecData[4] = true;
+        IP->SelectionVector->VecData[5] = false;
+    }
 
     IP->MinimumSynchronizationTime = synTime;
 
@@ -286,18 +290,17 @@ bool Reflexxes_velocity_run(    RMLVelocityInputParameters &InputState,
                 print_info("stop...");
                 std::vector<double>TargetVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
 
-                IP->SelectionVector->VecData[0] = VelocityState(*IP, 0);
-                IP->SelectionVector->VecData[1] = VelocityState(*IP, 1);
-                IP->SelectionVector->VecData[2] = VelocityState(*IP, 2);
-                IP->SelectionVector->VecData[3] = VelocityState(*IP, 3);
-                IP->SelectionVector->VecData[4] = VelocityState(*IP, 4);
-                IP->SelectionVector->VecData[5] = VelocityState(*IP, 5);
+                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                    IP->SelectionVector->VecData[i] = VelocityState(*IP, i);
 
-                Reflexxes_velocity_run(*IP, TargetVelocity, 0.5);
+                Reflexxes_velocity_run(*IP, TargetVelocity, 0.5, true);
                 pass = false;
                 break;
             }
         }
+
+        if(time_s > 5.0)
+            break;
 
         *IP->CurrentPositionVector =  *OP->NewPositionVector;
         *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
@@ -474,9 +477,18 @@ bool Reflexxes_position_run(std::vector<double> CurrentPosition, std::vector<dou
                 *IP_vel->CurrentPositionVector = *IP->CurrentPositionVector;
                 *IP_vel->CurrentVelocityVector = *IP->CurrentVelocityVector;
                 *IP_vel->CurrentAccelerationVector = *IP->CurrentAccelerationVector;
+
+                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                {
+                    if(IP->CurrentVelocityVector->VecData[i] == 0.0)
+                        IP_vel->SelectionVector->VecData[i] = false;
+                    else
+                        IP_vel->SelectionVector->VecData[i] = true;
+                }
+                
                 std::vector<double>TargetVelocity = {0,0,0,0,0,0};
 
-                Reflexxes_velocity_run(*IP_vel, TargetVelocity, 0.5);
+                Reflexxes_velocity_run(*IP_vel, TargetVelocity, 0.5, true);
                 pass = false;
                 break;
             }
