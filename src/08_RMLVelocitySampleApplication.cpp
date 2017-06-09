@@ -145,9 +145,9 @@ int main()
     IP->MaxJerkVector->VecData              [1] =    700.0      ;
     IP->MaxJerkVector->VecData              [2] =    500.0      ;
 
-    IP->TargetVelocityVector->VecData       [0] =   150.0       ;
-    IP->TargetVelocityVector->VecData       [1] =    75.0       ;
-    IP->TargetVelocityVector->VecData       [2] =   100.0       ;
+    IP->TargetVelocityVector->VecData       [0] =   0.0       ;
+    IP->TargetVelocityVector->VecData       [1] =    0.0       ;
+    IP->TargetVelocityVector->VecData       [2] =   0.0       ;
 
     IP->SelectionVector->VecData            [0] =   true        ;
     IP->SelectionVector->VecData            [1] =   true        ;
@@ -201,9 +201,9 @@ int main()
 
         if (!FirstCycleCompleted)
         {
-            FirstCycleCompleted =   true;
+            //FirstCycleCompleted =   true;
 
-            printf("-------------------------------------------------------\n");
+            /*printf("-------------------------------------------------------\n");
             printf("General information:\n\n");
 
             if (OP->IsTrajectoryPhaseSynchronized())
@@ -232,29 +232,23 @@ int main()
             }
 
             printf("The degree of freedom with the index %d will require the greatest execution time.\n", OP->GetDOFWithTheGreatestExecutionTime());
-
-            printf("-------------------------------------------------------\n");
-            printf("New state of motion:\n\n");
+*/
 
             printf("New position/pose vector                  : ");
             for ( j = 0; j < NUMBER_OF_DOFS; j++)
             {
                 printf("%10.3lf ", OP->NewPositionVector->VecData[j]);
             }
-            printf("\n");
-            printf("New velocity vector                       : ");
             for ( j = 0; j < NUMBER_OF_DOFS; j++)
             {
                 printf("%10.3lf ", OP->NewVelocityVector->VecData[j]);
             }
-            printf("\n");
-            printf("New acceleration vector                   : ");
             for ( j = 0; j < NUMBER_OF_DOFS; j++)
             {
                 printf("%10.3lf ", OP->NewAccelerationVector->VecData[j]);
             }
             printf("\n");
-            printf("-------------------------------------------------------\n");
+            /*printf("-------------------------------------------------------\n");
             printf("Extremes of the current trajectory:\n");
 
             for ( i = 0; i < NUMBER_OF_DOFS; i++)
@@ -302,7 +296,7 @@ int main()
                 }
                 printf("\n");
             }
-            printf("-------------------------------------------------------\n");
+            printf("-------------------------------------------------------\n");*/
         }
         // ****************************************************************
 
