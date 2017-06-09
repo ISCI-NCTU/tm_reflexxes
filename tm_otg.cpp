@@ -401,7 +401,7 @@ bool Reflexxes_position_run(std::vector<double> CurrentPosition, std::vector<dou
     IP->SelectionVector->VecData[2] = true;
     IP->SelectionVector->VecData[3] = true;
     IP->SelectionVector->VecData[4] = true;
-    IP->SelectionVector->VecData[5] = false;
+    IP->SelectionVector->VecData[5] = true;
 
     IP->MinimumSynchronizationTime = synTime;
 /**/
