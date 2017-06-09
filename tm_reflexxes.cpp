@@ -43,11 +43,9 @@
 TODO :
 
 ** Modullize Reflexxes_position_run()
-1. Position input use joint position.
 2. Position use cartesian position(import T).
 
 ** Create Reflexxes_velocity_run()
-1. Velocity input use joint space.
 2. Velocity use cartesian space(import jacobian)
 
 ********************************/
@@ -88,6 +86,15 @@ TODO :
 using namespace std;
 
 static struct termios oldt, newt;
+
+
+bool ReflexxesSmoothStop(   TmDriver& TR, 
+                            RMLVelocityInputParameters &InputState,  
+                            std::vector<double> TargetVelocity, 
+                            double synTime);
+
+
+
 /* Initialize new terminal i/o settings */
 void initTermios(int echo)
 {
@@ -865,4 +872,109 @@ int main(int argc, char **argv)
         }
     }
     return 0;
+}
+
+bool ReflexxesSmoothStop(       TmDriver& TR,
+                                RMLVelocityInputParameters &InputState, 
+                                std::vector<double> TargetVelocity, 
+                                double synTime)
+{
+    double blend = 0, time_s;
+    std::vector<double> vec;
+
+    ReflexxesAPI *RML = NULL;
+    RMLVelocityInputParameters  *IP = NULL;
+    RMLVelocityOutputParameters *OP = NULL;
+    RMLVelocityFlags Flags;
+    int ResultValue = 0;
+    bool pass = true;
+    struct timeval tm1,tm2;
+
+    initTermios(1);
+
+    RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
+    IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
+    OP = new RMLVelocityOutputParameters(NUMBER_OF_DOFS);
+    *IP = InputState;
+
+
+    // ********************************************************************/
+    // Creating all relevant objects of the Type II Reflexxes Motion Library*/
+
+    for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+    {
+        IP->MaxAccelerationVector->VecData[i] = 0.5*40;
+        IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
+    }
+    IP->MinimumSynchronizationTime = synTime;
+
+    // ********************************************************************
+
+
+    if (IP->CheckForValidity())
+        printf("Input values are valid!\n");
+    else
+        printf("Input values are INVALID!\n");
+
+    Flags.SynchronizationBehavior = RMLFlags::ONLY_TIME_SYNCHRONIZATION;
+
+    while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
+    {
+        //********************************************************
+        // The area execution in 25ms real time sharp
+
+        gettimeofday(&tm1, NULL); 
+
+        ResultValue =  RML->RMLVelocity(*IP, OP, Flags );
+
+        if (ResultValue < 0)
+        {
+            printf("An error occurred (%d).\n", ResultValue );
+            break;
+        }
+        vec = { OP->NewVelocityVector->VecData[0],
+                OP->NewVelocityVector->VecData[1],
+                OP->NewVelocityVector->VecData[2],
+                OP->NewVelocityVector->VecData[3],
+                OP->NewVelocityVector->VecData[4],
+                OP->NewVelocityVector->VecData[5]};
+
+        TR.setMoveJointSpeedabs(vec, blend);
+
+        //**********************
+        // Print out commands
+
+        time_s = TR.interface->stateRT->getTime();
+        printf("[ %lf ] pos:  ",time_s );
+
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+            printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
+
+        printf(" | spd: ");
+
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+            printf("%10.4lf ", OP->NewVelocityVector->VecData[i]);
+        
+        printf("\n");
+
+        //**********************
+
+        *IP->CurrentPositionVector      =   *OP->NewPositionVector      ;
+        *IP->CurrentVelocityVector      =   *OP->NewVelocityVector      ;
+        *IP->CurrentAccelerationVector  =   *OP->NewAccelerationVector  ;
+
+        gettimeofday(&tm2, NULL);
+        long long time_compensation = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);            
+        usleep(24940 - time_compensation);  
+
+        // The area execution in 25ms real time sharp
+        //********************************************************
+    }
+    resetTermios();
+
+    delete  RML;
+    delete  IP;
+    delete  OP;
+
+    return pass;
 }
