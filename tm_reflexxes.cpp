@@ -46,10 +46,10 @@
 /*******************************
 TODO :
 
-** Modullize Reflexxes_position_run()
+** Modullize ReflexxesPositioinRun()
 2. Position use cartesian position(import T).
 
-** Create Reflexxes_velocity_run()
+** Create ReflexxesVelocityRun()
 2. Velocity use cartesian space(import jacobian)
 
 ********************************/
@@ -95,7 +95,7 @@ static struct termios oldt, newt;
 void ReflexxesSmoothStop(   TmDriver& TR, 
                             RMLVelocityInputParameters &InputState,  
                             std::vector<double> TargetVelocity, 
-                            double synTime);
+                            double SynTime);
 
 
 /* tm_moder_driver.cpp */
@@ -304,10 +304,19 @@ void ReflexxesSmoothStop(   TmDriver& TR,
     }
 /* tm_moder_driver.cpp */
 
-bool Reflexxes_velocity_run(    TmDriver& TR,
+
+//  ********************************************************************/
+//  fn        : ReflexxesVelocityRun()
+//  beirf     : Use RML API to execute given velocity.  
+//  param[in] : TR, Object of TM driver.
+//  param[in] : &InputState, Current State of robot under RML.
+//  param[in] : TargetVelocity, The velocity when reach target position.
+//  param[in] : SynTime, The time for execute the trajectory.
+//  ********************************************************************
+bool ReflexxesVelocityRun(    TmDriver& TR,
                                 RMLVelocityInputParameters &InputState, 
                                 std::vector<double> TargetVelocity, 
-                                double synTime)
+                                double SynTime)
 {
     double blend = 0, time_s;
     std::vector<double> vec;
@@ -341,7 +350,7 @@ bool Reflexxes_velocity_run(    TmDriver& TR,
             IP->SelectionVector->VecData[i] = false;
     }
 
-    IP->MinimumSynchronizationTime = synTime;
+    IP->MinimumSynchronizationTime = SynTime;
 
     // ********************************************************************
 
@@ -448,13 +457,24 @@ bool Reflexxes_velocity_run(    TmDriver& TR,
     return pass;
 }
 
-bool Reflexxes_position_run(    TmDriver& TR, 
+//  ********************************************************************/
+//  fn        : ReflexxesPositionRun()
+//  beirf     : Use RML API to execute given position.  
+//  param[in] : TR, Object of TM driver.
+//  param[in] : &InputState, Current State of robot under RML.
+//  param[in] : TargetVelocity, The final velocity of each joint.
+//  param[in] : SynTime, The time for execute the trajectory.
+//  ********************************************************************
+bool ReflexxesPositionRun(      TmDriver& TR, 
+                                RMLPositionInputParameters &InputState,
                                 std::vector<double> TargetPosition, 
-                                double synTime)
+                                std::vector<double> TargetVelocity,
+                                double SynTime)
 {
     double blend = 0, time_s;
     std::vector<double> vec, CurrentPosition, FinalPosition;
     bool pass = true;
+    struct timeval tm1,tm2, tm3, tm4;
 
     ReflexxesAPI *RML = NULL    ;
     RMLPositionInputParameters  *IP = NULL;
@@ -468,73 +488,27 @@ bool Reflexxes_position_run(    TmDriver& TR,
     RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
     IP = new RMLPositionInputParameters(NUMBER_OF_DOFS);
     OP = new RMLPositionOutputParameters(NUMBER_OF_DOFS);
-
+    *IP = InputState;
     time_s = TR.interface->stateRT->getQAct(CurrentPosition);
 
 
-    // ********************************************************************/
-    // Assigning all INPUT, OUTPUT params of the Type II Reflexxes Motion Library*/
-
-    IP->CurrentPositionVector->VecData[0] = CurrentPosition[0];
-    IP->CurrentPositionVector->VecData[1] = CurrentPosition[1];
-    IP->CurrentPositionVector->VecData[2] = CurrentPosition[2];
-    IP->CurrentPositionVector->VecData[3] = CurrentPosition[3];
-    IP->CurrentPositionVector->VecData[4] = CurrentPosition[4];
-    IP->CurrentPositionVector->VecData[5] = CurrentPosition[5];
-
-    IP->CurrentVelocityVector->VecData[0] = 0.0;
-    IP->CurrentVelocityVector->VecData[1] = 0.0;
-    IP->CurrentVelocityVector->VecData[2] = 0.0;
-    IP->CurrentVelocityVector->VecData[3] = 0.0;
-    IP->CurrentVelocityVector->VecData[4] = 0.0;
-    IP->CurrentVelocityVector->VecData[5] = 0.0;
-
-    IP->CurrentAccelerationVector->VecData[0] = 0.0;
-    IP->CurrentAccelerationVector->VecData[1] = 0.0;
-    IP->CurrentAccelerationVector->VecData[2] = 0.0;
-    IP->CurrentAccelerationVector->VecData[3] = 0.0;
-    IP->CurrentAccelerationVector->VecData[4] = 0.0;
-    IP->CurrentAccelerationVector->VecData[5] = 0.0;
-
-    IP->MaxVelocityVector->VecData[0] = MAX_VELOCITY; //0.3247
-    IP->MaxVelocityVector->VecData[1] = MAX_VELOCITY; //0.3247
-    IP->MaxVelocityVector->VecData[2] = MAX_VELOCITY; //0.3247
-    IP->MaxVelocityVector->VecData[3] = MAX_VELOCITY; //0.3247
-    IP->MaxVelocityVector->VecData[4] = MAX_VELOCITY; //0.3247
-    IP->MaxVelocityVector->VecData[5] = MAX_VELOCITY; //0.3247
-
-    IP->MaxAccelerationVector->VecData[0] = MAX_ACC;
-    IP->MaxAccelerationVector->VecData[1] = MAX_ACC;
-    IP->MaxAccelerationVector->VecData[2] = MAX_ACC;
-    IP->MaxAccelerationVector->VecData[3] = MAX_ACC;
-    IP->MaxAccelerationVector->VecData[4] = MAX_ACC;
-    IP->MaxAccelerationVector->VecData[5] = MAX_ACC;
-
-    IP->TargetPositionVector->VecData[0] = TargetPosition[0];
-    IP->TargetPositionVector->VecData[1] = TargetPosition[1];
-    IP->TargetPositionVector->VecData[2] = TargetPosition[2];
-    IP->TargetPositionVector->VecData[3] = TargetPosition[3];
-    IP->TargetPositionVector->VecData[4] = TargetPosition[4];
-    IP->TargetPositionVector->VecData[5] = TargetPosition[5];
-
-    IP->TargetVelocityVector->VecData[0] = 0.0;
-    IP->TargetVelocityVector->VecData[1] = 0.0;
-    IP->TargetVelocityVector->VecData[2] = 0.0;
-    IP->TargetVelocityVector->VecData[3] = 0.0;
-    IP->TargetVelocityVector->VecData[4] = 0.0;
-    IP->TargetVelocityVector->VecData[5] = 0.0;
-
-    IP->SelectionVector->VecData[0] = true;
-    IP->SelectionVector->VecData[1] = true;
-    IP->SelectionVector->VecData[2] = true;
-    IP->SelectionVector->VecData[3] = true;
-    IP->SelectionVector->VecData[4] = true;
-    IP->SelectionVector->VecData[5] = false;
-
-    IP->MinimumSynchronizationTime = synTime;
-    
-    // ********************************************************************
-
+    //  ********************************************************************/
+    //  Assigning all RMLPositionInputParameters : 
+    //  Current POS, VEL, ACC : set before call ReflexxesPositionRun
+    //  Target POS, VEL       : set before call ReflexxesPositionRun
+    //  Max VEL, ACC          : set after call ReflexxesPositionRun
+    //  SelectionVector       : set after call ReflexxesPositionRun
+    //  ********************************************************************
+    for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+    {
+        IP->CurrentPositionVector->VecData[i] = CurrentPosition[i];
+        IP->MaxVelocityVector->VecData[i] = MAX_VELOCITY; //0.3247
+        IP->MaxAccelerationVector->VecData[i] = MAX_ACC;
+        IP->TargetPositionVector->VecData[i] = TargetPosition[i]; 
+        IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
+        IP->SelectionVector->VecData[i] = true;
+    }
+    IP->MinimumSynchronizationTime = SynTime;
 
     if (IP->CheckForValidity())
         printf("Input values are valid!\n");
@@ -543,9 +517,6 @@ bool Reflexxes_position_run(    TmDriver& TR,
         printf("Input values are INVALID!\n");
         pass = false;
     }
-
-
-    struct timeval tm1,tm2, tm3, tm4;
 
     gettimeofday(&tm3, NULL);
 
@@ -627,7 +598,7 @@ bool Reflexxes_position_run(    TmDriver& TR,
     long long tt = 1000000 * (tm4.tv_sec - tm3.tv_sec) + (tm4.tv_usec - tm3.tv_usec);
 
 
-    if(pass)
+    if(pass) // print out final state
     {
         time_s = TR.interface->stateRT->getQAct(FinalPosition);
         printf("=============== Final state position based =========================\n");
@@ -648,10 +619,19 @@ bool Reflexxes_position_run(    TmDriver& TR,
 
     return pass;
 }
+
+//  ********************************************************************/
+//  fn        : ReflexxesSmoothStop()
+//  beirf     : Use RML velocity based API to stop robot smoothly.
+//  param[in] : TR, Object of TM driver.
+//  param[in] : &InputState, Current State of robot under RML velocity based.
+//  param[in] : TargetVelocity, The final velocity of each joint.
+//  param[in] : SynTime, The time for execute the trajectory.
+//  ********************************************************************
 void ReflexxesSmoothStop(       TmDriver& TR,
                                 RMLVelocityInputParameters &InputState,
                                 std::vector<double> TargetVelocity, 
-                                double synTime)
+                                double SynTime)
 {
     double blend = 0, time_s;
     std::vector<double> vec;
@@ -686,7 +666,7 @@ void ReflexxesSmoothStop(       TmDriver& TR,
             IP->SelectionVector->VecData[i] = false;
 
     }
-    IP->MinimumSynchronizationTime = synTime;
+    IP->MinimumSynchronizationTime = SynTime;
 
     // ********************************************************************
 
@@ -772,6 +752,51 @@ void ReflexxesSmoothStop(       TmDriver& TR,
     delete  OP;
 }
 
+void ReflexxesStart(TmDriver& TM5)
+{
+    bool run_succeed = true;
+    double SynchronousTime = 5.0;
+    std::vector<double> TargetPosition, TargetVelocity;
+
+    RMLPositionInputParameters  *IP_position = new RMLPositionInputParameters(NUMBER_OF_DOFS);
+    RMLVelocityInputParameters  *IP_velocity = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
+
+    for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+    {
+        IP_position->CurrentPositionVector->VecData[i] = 0.0;
+        IP_position->CurrentVelocityVector->VecData[i] = 0.0;
+        IP_position->CurrentAccelerationVector->VecData[i] = 0.0;
+
+        IP_velocity->CurrentPositionVector->VecData[i] = 0.0;
+        IP_velocity->CurrentVelocityVector->VecData[i] = 0.0;
+        IP_velocity->CurrentAccelerationVector->VecData[i] = 0.0;
+    }
+
+    while(run_succeed)
+    {
+        if (run_succeed)
+        {
+            TargetPosition = {0,0,0,0,1.57,0};
+            TargetVelocity = {0.0, 0.0, 0.0, 0.0, 0.0};
+            run_succeed = ReflexxesPositionRun(TM5, *IP_position, TargetPosition, TargetVelocity, SynchronousTime);
+        }
+        else
+            break;
+
+        if (run_succeed)
+        {
+            TargetPosition = {0,0,0,0,0,0};
+            TargetVelocity = {0.0, 0.0, 0.0, 0.0, 0.0};
+            run_succeed = ReflexxesPositionRun(TM5, *IP_position, TargetPosition, TargetVelocity, SynchronousTime);
+        }
+        else
+            break;
+    }
+
+    delete IP_position;
+    delete IP_velocity;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -798,6 +823,7 @@ int main(int argc, char **argv)
     char c;
     while (1)
     {
+/**/
         memset(cstr, 0, 512);
         fgets(cstr, 512, stdin);
         int n = (int)strlen(cstr);
@@ -870,59 +896,14 @@ int main(int argc, char **argv)
         {
             system("clear");
         }
+/**/        
         else if (strncmp(cstr, "gotest", 6) == 0)
         {
             TmRobot.setJointSpdModeON();
             print_info("joint velocity control mode ON...");
-            bool run_succeed = true;
-            double SynchronousTime = 2.0;
-            std::vector<double> TargetPosition;
+            
+            ReflexxesStart(TmRobot);
 
-            while(run_succeed)
-            {
-                if (run_succeed)
-                {
-                    TargetPosition = {0,0,1.57,-1.57,1.57,0};
-                    run_succeed = Reflexxes_position_run(TmRobot, TargetPosition, SynchronousTime);
-                }
-                else
-                    break;
-
-                if (run_succeed)
-                {
-                    TargetPosition = {0,0,0,0,0,0};
-                    run_succeed = Reflexxes_position_run(TmRobot, TargetPosition, SynchronousTime);
-                }
-                else
-                    break;
-            }
-/*
-            RMLVelocityInputParameters *IP_vel =  new RMLVelocityInputParameters(NUMBER_OF_DOFS);
-
-            IP_vel->CurrentPositionVector->VecData[0] = 0.0;
-            IP_vel->CurrentPositionVector->VecData[1] = 0.0;
-            IP_vel->CurrentPositionVector->VecData[2] = 0.0;
-            IP_vel->CurrentPositionVector->VecData[3] = 0.0;
-            IP_vel->CurrentPositionVector->VecData[4] = 0.0;
-            IP_vel->CurrentPositionVector->VecData[5] = 0.0;
-
-            IP_vel->CurrentVelocityVector->VecData[0] = 0.0;
-            IP_vel->CurrentVelocityVector->VecData[1] = 0.0;
-            IP_vel->CurrentVelocityVector->VecData[2] = 0.0;
-            IP_vel->CurrentVelocityVector->VecData[3] = 0.0;
-            IP_vel->CurrentVelocityVector->VecData[4] = 0.0;
-            IP_vel->CurrentVelocityVector->VecData[5] = 0.0;
-
-            IP_vel->CurrentAccelerationVector->VecData[0] = 0.0;
-            IP_vel->CurrentAccelerationVector->VecData[1] = 0.0;
-            IP_vel->CurrentAccelerationVector->VecData[2] = 0.0;
-            IP_vel->CurrentAccelerationVector->VecData[3] = 0.0;
-            IP_vel->CurrentAccelerationVector->VecData[4] = 0.0;
-            IP_vel->CurrentAccelerationVector->VecData[5] = 0.0;
-
-            std::vector<double>TargetVelocity = {0,0,0,0,0.017,0};
-            run_succeed = Reflexxes_velocity_run(TmRobot,*IP_vel, TargetVelocity, 0.5);
-*/
             TmRobot.setJointSpdModeoOFF();
             print_info("joint vlocity control mode OFF...");
         }
