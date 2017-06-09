@@ -644,8 +644,6 @@ void ReflexxesSmoothStop(       TmDriver& TR,
     bool pass = true;
     struct timeval tm1,tm2, tm3, tm4;
 
-    initTermios(1);
-
     RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
     IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
     OP = new RMLVelocityOutputParameters(NUMBER_OF_DOFS);
@@ -745,8 +743,6 @@ void ReflexxesSmoothStop(       TmDriver& TR,
     printf("\n");
     print_info("Smooth stop finish in %llu us", tt);
 
-    resetTermios();
-
     delete  RML;
     delete  IP;
     delete  OP;
@@ -755,7 +751,7 @@ void ReflexxesSmoothStop(       TmDriver& TR,
 void ReflexxesStart(TmDriver& TM5)
 {
     bool run_succeed = true;
-    double SynchronousTime = 5.0;
+    double SynchronousTime = 2.0;
     std::vector<double> TargetPosition, TargetVelocity;
 
     RMLPositionInputParameters  *IP_position = new RMLPositionInputParameters(NUMBER_OF_DOFS);
