@@ -85,6 +85,10 @@
 using namespace std;
 static struct termios oldt, newt;
 
+void ReflexxesSmoothStop(   RMLVelocityInputParameters &InputState,  
+                            std::vector<double> TargetVelocity, 
+                            double SynTime);
+
 
 /* Initialize new terminal i/o settings */
 void initTermios(int echo)
@@ -147,7 +151,7 @@ bool VelocityState(RMLVelocityInputParameters &InputState, int joint_num)
 bool Reflexxes_velocity_run(    RMLVelocityInputParameters &InputState, 
                                 std::vector<double> TargetVelocity, 
                                 double synTime,
-                                bool already_selected )
+                                bool already_seleted)
 {
     double blend = 0, time_s;
     std::vector<double> vec;
@@ -207,14 +211,14 @@ bool Reflexxes_velocity_run(    RMLVelocityInputParameters &InputState,
     IP->TargetVelocityVector->VecData[4] = TargetVelocity[4];
     IP->TargetVelocityVector->VecData[5] = TargetVelocity[5];
 
-    if(!already_selected)
+    if(!already_seleted)
     {
         IP->SelectionVector->VecData[0] = true;
         IP->SelectionVector->VecData[1] = true;
         IP->SelectionVector->VecData[2] = true;
         IP->SelectionVector->VecData[3] = true;
         IP->SelectionVector->VecData[4] = true;
-        IP->SelectionVector->VecData[5] = false;
+        IP->SelectionVector->VecData[5] = true;
     }
 
     IP->MinimumSynchronizationTime = synTime;
@@ -287,13 +291,9 @@ bool Reflexxes_velocity_run(    RMLVelocityInputParameters &InputState,
             char c = getchar();
             if (c == 'q' || c == 'Q')
             {
-                print_info("stop...");
-                std::vector<double>TargetVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
-
-                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
-                    IP->SelectionVector->VecData[i] = VelocityState(*IP, i);
-
-                Reflexxes_velocity_run(*IP, TargetVelocity, 0.5, true);
+                print_info("Smooth Stop Activate...");
+                std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
+                ReflexxesSmoothStop(*IP, StopVelocity, 0.5);
                 pass = false;
                 break;
             }
@@ -317,6 +317,7 @@ bool Reflexxes_velocity_run(    RMLVelocityInputParameters &InputState,
     gettimeofday(&tm4, NULL);
     long long tt = 1000000 * (tm4.tv_sec - tm3.tv_sec) + (tm4.tv_usec - tm3.tv_usec);
 
+    InputState = *IP;
     delete  RML;
     delete  IP;
     delete  OP;
@@ -471,24 +472,15 @@ bool Reflexxes_position_run(std::vector<double> CurrentPosition, std::vector<dou
             char c = getchar();
             if (c == 'q' || c == 'Q')
             {
-                print_info("stop...");
-                
-                RMLVelocityInputParameters *IP_vel =  new RMLVelocityInputParameters(NUMBER_OF_DOFS);
-                *IP_vel->CurrentPositionVector = *IP->CurrentPositionVector;
-                *IP_vel->CurrentVelocityVector = *IP->CurrentVelocityVector;
+                print_info("Smooth Stop Activate...");
+                std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
+                RMLVelocityInputParameters *IP_vel = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
+                *IP_vel->CurrentPositionVector     = *IP->CurrentPositionVector;
+                *IP_vel->CurrentVelocityVector     = *IP->CurrentVelocityVector;
                 *IP_vel->CurrentAccelerationVector = *IP->CurrentAccelerationVector;
-
-                for (int i = 0; i < NUMBER_OF_DOFS; ++i)
-                {
-                    if(IP->CurrentVelocityVector->VecData[i] == 0.0)
-                        IP_vel->SelectionVector->VecData[i] = false;
-                    else
-                        IP_vel->SelectionVector->VecData[i] = true;
-                }
                 
-                std::vector<double>TargetVelocity = {0,0,0,0,0,0};
-
-                Reflexxes_velocity_run(*IP_vel, TargetVelocity, 0.5, true);
+                ReflexxesSmoothStop(*IP_vel, StopVelocity, 0.5);
+                delete IP_vel;
                 pass = false;
                 break;
             }
@@ -525,6 +517,132 @@ bool Reflexxes_position_run(std::vector<double> CurrentPosition, std::vector<dou
     return pass;
 }
 
+//  ********************************************************************/
+//  fn        : ReflexxesSmoothStop()
+//  beirf     : Use RML velocity based API to stop robot smoothly.
+//  param[in] : &InputState, Current State of robot under RML velocity based.
+//  param[in] : TargetVelocity, The final velocity of each joint.
+//  param[in] : SynTime, The time for execute the trajectory.
+//  ********************************************************************
+void ReflexxesSmoothStop(       RMLVelocityInputParameters &InputState,
+                                std::vector<double> TargetVelocity, 
+                                double SynTime)
+{
+    double blend = 0, time_s;
+    std::vector<double> vec;
+
+    ReflexxesAPI *RML = NULL;
+    RMLVelocityInputParameters  *IP = NULL;
+    RMLVelocityOutputParameters *OP = NULL;
+    RMLVelocityFlags Flags;
+    int ResultValue = 0;
+    bool pass = true;
+    struct timeval tm1,tm2, tm3, tm4;
+    double cycle_iteration;
+
+    RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
+    IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
+    OP = new RMLVelocityOutputParameters(NUMBER_OF_DOFS);
+    *IP = InputState;
+
+
+    // ********************************************************************/
+    // Creating all relevant objects of the Type II Reflexxes Motion Library*/
+
+    for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+    {
+        IP->MaxAccelerationVector->VecData[i] = 0.5*40;
+        IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
+        
+        if(IP->CurrentVelocityVector->VecData[i] != 0.0)    
+            IP->SelectionVector->VecData[i] = true;
+        else
+            IP->SelectionVector->VecData[i] = false;
+
+    }
+    IP->MinimumSynchronizationTime = SynTime;
+
+    // ********************************************************************
+
+
+    if (IP->CheckForValidity())
+        printf("Input values are valid!\n");
+    else
+        printf("Input values are INVALID!\n");
+
+    Flags.SynchronizationBehavior = RMLFlags::ONLY_TIME_SYNCHRONIZATION;
+
+    gettimeofday(&tm3, NULL);
+    while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
+    {
+        //********************************************************
+        // The area execution in 25ms real time sharp
+
+        gettimeofday(&tm1, NULL); 
+
+        ResultValue =  RML->RMLVelocity(*IP, OP, Flags );
+
+        if (ResultValue < 0)
+        {
+            printf("An error occurred (%d).\n", ResultValue );
+            break;
+        }
+        vec = { OP->NewVelocityVector->VecData[0],
+                OP->NewVelocityVector->VecData[1],
+                OP->NewVelocityVector->VecData[2],
+                OP->NewVelocityVector->VecData[3],
+                OP->NewVelocityVector->VecData[4],
+                OP->NewVelocityVector->VecData[5]};
+
+        //**********************
+        // Print out commands
+
+        time_s = cycle_iteration*0.025;
+        cycle_iteration++;
+        printf("[ %lf ] pos:  ",time_s );
+
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+            printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
+
+        printf(" | spd: ");
+
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+            printf("%10.4lf ", OP->NewVelocityVector->VecData[i]);
+        
+        printf("\n");
+
+        //**********************
+
+        *IP->CurrentPositionVector      =   *OP->NewPositionVector      ;
+        *IP->CurrentVelocityVector      =   *OP->NewVelocityVector      ;
+        *IP->CurrentAccelerationVector  =   *OP->NewAccelerationVector  ;
+
+        gettimeofday(&tm2, NULL);
+        long long time_compensation = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);            
+        usleep(24940 - time_compensation);  
+
+        // The area execution in 25ms real time sharp
+        //********************************************************
+    }
+
+    gettimeofday(&tm4, NULL);
+    long long tt = 1000000 * (tm4.tv_sec - tm3.tv_sec) + (tm4.tv_usec - tm3.tv_usec);
+
+    std::vector<double> FinalPosition;
+    printf("=============== Final state of Smooth Stop =========================\n");
+    printf("[ %lf ]  ", time_s);
+
+    for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+        printf(" %10.4lf ",FinalPosition[i]);
+    printf("\n");
+    print_info("Smooth stop finish in %llu us", tt);
+    InputState = *IP;
+
+    delete  RML;
+    delete  IP;
+    delete  OP;
+}
+
 
 int main(int argc, char const *argv[])
 {
@@ -534,7 +652,7 @@ int main(int argc, char const *argv[])
     std::vector<double> TargetPosition, CurrentPosition; 
 
 
-    while(run_succeed)
+    /*while(run_succeed)
     {
         if (run_succeed)
         {
@@ -553,13 +671,26 @@ int main(int argc, char const *argv[])
         }
         else
             break;
-    }
-/*
-    RMLVelocityInputParameters *IP_vel =  new RMLVelocityInputParameters(NUMBER_OF_DOFS);
-    std::vector<double>TargetVelocity = {0,0,0,0,0,0};
+    }*/
 
-    run_succeed = Reflexxes_velocity_run(*IP_vel, TargetVelocity, 0.5);
-*/
+    RMLVelocityInputParameters *IP =  new RMLVelocityInputParameters(NUMBER_OF_DOFS);
+    
+    for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+    {
+        IP->CurrentPositionVector->VecData[i] = 0.0;
+        IP->CurrentVelocityVector->VecData[i] = 0.0;
+        IP->CurrentVelocityVector->VecData[i] = 0.0;   
+    }
+    
+
+    std::vector<double>TargetVelocity = {0.3, 0.3, 0.4, 0.3, 0.4, 0.3};
+
+    run_succeed = Reflexxes_velocity_run(*IP, TargetVelocity, 3, false);
+
+    TargetVelocity = {-0.3,-0.5,-0.7,0.0,0,0};
+
+    run_succeed = Reflexxes_velocity_run(*IP, TargetVelocity, 3, false);
+
 
     print_info("joint vlocity control mode OFF...");
 
