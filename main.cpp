@@ -282,27 +282,29 @@ void ReflexxesStart(TmDriver& TM5)
 {
     bool run_succeed = true;
     double SynchronousTime = 3.0;
-    std::vector<double> TargetPosition, TargetVelocity;
+    std::vector<double> TargetPosition, TargetVelocity, CurrentPosition;
 
     RMLPositionInputParameters  *IP_position = new RMLPositionInputParameters(NUMBER_OF_DOFS);
     RMLVelocityInputParameters  *IP_velocity = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
 
+    TM5.interface->stateRT->getQAct(CurrentPosition);
+
     for (int i = 0; i < NUMBER_OF_DOFS; ++i)
     {
-        IP_position->CurrentPositionVector->VecData[i] = 0.0;
+        IP_position->CurrentPositionVector->VecData[i] = CurrentPosition[i];
         IP_position->CurrentVelocityVector->VecData[i] = 0.0;
         IP_position->CurrentAccelerationVector->VecData[i] = 0.0;
 
-        IP_velocity->CurrentPositionVector->VecData[i] = 0.0;
+        IP_velocity->CurrentPositionVector->VecData[i] = CurrentPosition[i];
         IP_velocity->CurrentVelocityVector->VecData[i] = 0.0;
         IP_velocity->CurrentAccelerationVector->VecData[i] = 0.0;
     }
 
-    /*while(run_succeed)
+    while(run_succeed)
     {
         if (run_succeed)
         {
-            TargetPosition = {0,0,0,0,1.57,0};
+            TargetPosition = {0,0,1.57,-1.57,1.57,0};
             TargetVelocity = {0.0, 0.0, 0.0, 0.0, 0.0};
             run_succeed = tm_reflexxes::ReflexxesPositionRun(TM5, *IP_position, TargetPosition, TargetVelocity, SynchronousTime);
         }
@@ -317,9 +319,9 @@ void ReflexxesStart(TmDriver& TM5)
         }
         else
             break;
-    }*/
+    }
 
-    
+    /*
     while(run_succeed)
     {
         if(run_succeed)
@@ -337,7 +339,7 @@ void ReflexxesStart(TmDriver& TM5)
         else
             break;
     }
-
+*/
 
 
     delete IP_position;
@@ -370,7 +372,6 @@ int main(int argc, char **argv)
     char c;
     while (1)
     {
-/**/
         memset(cstr, 0, 512);
         fgets(cstr, 512, stdin);
         int n = (int)strlen(cstr);
@@ -442,8 +443,7 @@ int main(int argc, char **argv)
         else if (strncmp(cstr, "clear", 5) == 0)
         {
             system("clear");
-        }
-/**/        
+        }        
         else if (strncmp(cstr, "gotest", 6) == 0)
         {
             TmRobot.setJointSpdModeON();
