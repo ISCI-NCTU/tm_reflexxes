@@ -549,7 +549,6 @@ namespace tm_reflexxes{
 
 
     void ReflexxesSmoothStop_sim(   RMLVelocityInputParameters &InputState,
-                                    std::vector<double> TargetVelocity, 
                                     double SynTime)
     {
         double time_s;
@@ -756,8 +755,7 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
-                    ReflexxesSmoothStop_sim(*IP, StopVelocity, 0.5);
+                    ReflexxesSmoothStop_sim(*IP, 0.5);
                     pass = false;
                     break;
                 }
@@ -899,13 +897,12 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
                     RMLVelocityInputParameters *IP_vel = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
                     *IP_vel->CurrentPositionVector     = *IP->CurrentPositionVector;
                     *IP_vel->CurrentVelocityVector     = *IP->CurrentVelocityVector;
                     *IP_vel->CurrentAccelerationVector = *IP->CurrentAccelerationVector;
                     
-                    ReflexxesSmoothStop_sim(*IP_vel, StopVelocity, 0.5);
+                    ReflexxesSmoothStop_sim(*IP_vel, 0.5);
                     delete IP_vel;
                     pass = false;
                     break;
