@@ -110,8 +110,7 @@ namespace tm_reflexxes{
     //  param[in] : SynTime, The time for execute the trajectory.
     //  ********************************************************************
     void ReflexxesSmoothStop(       TmDriver& TR,
-                                    RMLVelocityInputParameters &InputState,
-                                    std::vector<double> TargetVelocity, 
+                                    RMLVelocityInputParameters &InputState, 
                                     double SynTime)
     {
         double blend = 0, time_s;
@@ -137,8 +136,7 @@ namespace tm_reflexxes{
         for (int i = 0; i < NUMBER_OF_DOFS; ++i)
         {
             IP->MaxAccelerationVector->VecData[i] = 0.5*40;
-            IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
-            
+            IP->TargetVelocityVector->VecData[i] = 0.0;
             if(IP->CurrentVelocityVector->VecData[i] != 0.0)    
                 IP->SelectionVector->VecData[i] = true;
             else
@@ -338,8 +336,9 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
-                    ReflexxesSmoothStop(TR,*IP, StopVelocity, 0.5);
+                    //std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
+                    //ReflexxesSmoothStop(TR,*IP, StopVelocity, 0.5);
+                    ReflexxesSmoothStop(TR,*IP, 0.5);
                     pass = false;
                     break;
                 }
@@ -497,13 +496,12 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
                     RMLVelocityInputParameters *IP_vel = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
                     *IP_vel->CurrentPositionVector     = *IP->CurrentPositionVector;
                     *IP_vel->CurrentVelocityVector     = *IP->CurrentVelocityVector;
                     *IP_vel->CurrentAccelerationVector = *IP->CurrentAccelerationVector;
                     
-                    ReflexxesSmoothStop(TR,*IP_vel, StopVelocity, 0.5);
+                    ReflexxesSmoothStop(TR,*IP_vel, 0.5);
                     delete IP_vel;
                     pass = false;
                     break;
