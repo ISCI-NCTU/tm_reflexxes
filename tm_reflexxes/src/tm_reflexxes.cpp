@@ -781,7 +781,7 @@ namespace tm_reflexxes{
             printf("[ %lf ]  ", time_s);
 
             for (int i = 0; i < NUMBER_OF_DOFS; ++i)
-                printf(" %10.4lf ",IP->CurrentPositionVector->VecData[i]);
+                printf(" %10.4lf ",IP->CurrentVelocityVector->VecData[i]);
             printf("\n");
             print_info("Finished in %llu us", tt);
         }
@@ -916,7 +916,7 @@ namespace tm_reflexxes{
             printf("[ %lf ]  ", time_s);
 
             for (int i = 0; i < NUMBER_OF_DOFS; ++i)
-                printf(" %10.4lf ",IP->CurrentPositionVector->VecData[i]);
+                printf(" %10.4lf ",IP->CurrentVelocityVector->VecData[i]);
             printf("\n");
             print_info("Finished in %llu us", tt);
         }
