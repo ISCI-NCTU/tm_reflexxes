@@ -287,7 +287,6 @@ namespace tm_reflexxes{
 
 
         struct timeval tm1,tm2, tm3, tm4;
-        double cycle_iteration = 0.0;
 
         gettimeofday(&tm3, NULL);
 
@@ -561,7 +560,7 @@ namespace tm_reflexxes{
         int ResultValue = 0;
         bool pass = true;
         struct timeval tm1,tm2, tm3, tm4;
-        double cycle_iteration;
+        double cycle_iteration = 1.0;
 
         RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
         IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
@@ -711,7 +710,7 @@ namespace tm_reflexxes{
 
 
         struct timeval tm1,tm2, tm3, tm4;
-        double cycle_iteration = 0.0;
+        double cycle_iteration = 1.0;
 
         gettimeofday(&tm3, NULL);
 
@@ -849,7 +848,7 @@ namespace tm_reflexxes{
 
 
         struct timeval tm1,tm2, tm3, tm4;
-        double cycle_iteration = 0.0;
+        double cycle_iteration = 1.0;
 
         gettimeofday(&tm3, NULL);
 
