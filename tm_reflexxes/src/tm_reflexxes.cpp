@@ -796,6 +796,141 @@ namespace tm_reflexxes{
         return pass;
     }
 
+    bool ReflexxesVelocityRun_sim(  RMLVelocityInputParameters &InputState, 
+                                    std::vector<double> TargetVelocity)
+    {
+        double time_s;
+
+        ReflexxesAPI *RML = NULL;
+        RMLVelocityInputParameters  *IP = NULL;
+        RMLVelocityOutputParameters *OP = NULL;
+        RMLVelocityFlags Flags;
+        int ResultValue = 0;
+        bool pass = true;
+
+        initTermios(1);
+
+        RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
+        IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
+        OP = new RMLVelocityOutputParameters(NUMBER_OF_DOFS);
+        *IP = InputState;
+
+
+        // ********************************************************************/
+        // Creating all relevant objects of the Type II Reflexxes Motion Library
+        for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+        {
+            IP->MaxAccelerationVector->VecData[i] = 0.5*40;
+            IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
+
+            if(IP->CurrentVelocityVector->VecData[i] != TargetVelocity[i])    
+                IP->SelectionVector->VecData[i] = true;
+            else
+                IP->SelectionVector->VecData[i] = false;
+        }
+
+        // ********************************************************************
+
+
+        if (IP->CheckForValidity())
+        {
+            printf("Input values are valid!\n");
+        }
+        else
+        {
+            printf("Input values are INVALID!\n");
+        }
+        Flags.SynchronizationBehavior = RMLFlags::ONLY_TIME_SYNCHRONIZATION;
+        
+
+
+        struct timeval tm1,tm2, tm3, tm4;
+        double cycle_iteration = 1.0;
+
+        gettimeofday(&tm3, NULL);
+
+        while (ResultValue != ReflexxesAPI::RML_FINAL_STATE_REACHED)
+        {
+            //********************************************************
+            // The area execution in 25ms real time sharp
+
+            gettimeofday(&tm1, NULL); 
+
+            ResultValue =  RML->RMLVelocity(*IP, OP, Flags );
+
+            if (ResultValue < 0)
+            {
+                printf("An error occurred (%d).\n", ResultValue );
+                break;
+            }
+
+            //***************************************************************
+            // Print out commands
+
+            time_s = cycle_iteration*0.025;
+            cycle_iteration++;
+
+            printf("[ %lf ] pos:  ",time_s);
+
+            for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                printf("%10.4lf ", OP->NewPositionVector->VecData[i]);
+
+            printf(" | spd: ");
+
+            for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                printf("%10.4lf ", OP->NewVelocityVector->VecData[i]);
+    
+            printf("\n");
+
+            //***************************************************************
+            if (kbhit())
+            {
+                char c = getchar();
+                if (c == 'q' || c == 'Q')
+                {
+                    print_info("Smooth Stop Activate...");
+                    ReflexxesSmoothStop_sim(*IP, 0.5);
+                    pass = false;
+                    break;
+                }
+            }
+
+            *IP->CurrentPositionVector =  *OP->NewPositionVector;
+            *IP->CurrentVelocityVector =  *OP->NewVelocityVector;
+            *IP->CurrentAccelerationVector = *OP->NewAccelerationVector;
+
+            gettimeofday(&tm2, NULL);
+            long long time_compensation = 1000000 * (tm2.tv_sec - tm1.tv_sec) + (tm2.tv_usec - tm1.tv_usec);            
+            usleep(24940 - time_compensation);  
+
+            //********************************************************
+            // The area execution in 25ms real time sharp
+        }
+
+        gettimeofday(&tm4, NULL);
+        long long tt = 1000000 * (tm4.tv_sec - tm3.tv_sec) + (tm4.tv_usec - tm3.tv_usec);
+
+        if(pass)
+        {
+            printf("=============== Final state velocity based =========================\n");
+            printf("[ %lf ]  ", time_s);
+
+            for (int i = 0; i < NUMBER_OF_DOFS; ++i)
+                printf(" %10.4lf ",IP->CurrentPositionVector->VecData[i]);
+            printf("\n");
+            print_info("Finished in %llu us", tt);
+        }
+
+        resetTermios();
+
+        InputState = *IP;
+        delete  RML;
+        delete  IP;
+        delete  OP;
+
+        return pass;
+    }
+
     bool ReflexxesPositionRun_sim(  RMLPositionInputParameters &InputState, 
                                     std::vector<double> TargetPosition,
                                     std::vector<double> TargetVelocity, 
