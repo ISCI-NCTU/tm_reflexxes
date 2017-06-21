@@ -92,6 +92,9 @@ namespace tm_reflexxes {
                                     std::vector<double> TargetVelocity, 
                                     double SynTime);
 
+	bool ReflexxesVelocityRun_sim(  RMLVelocityInputParameters &InputState, 
+                                    std::vector<double> TargetVelocity);
+
 	bool ReflexxesPositionRun_sim(  RMLPositionInputParameters &InputState, 
                                     std::vector<double> TargetPosition,
                                     std::vector<double> TargetVelocity, 
