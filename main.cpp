@@ -45,17 +45,6 @@
  * limitations under the License.
  **********************************************************************/
 
-/*******************************
-TODO :
-
-** Modullize ReflexxesPositioinRun()
-2. Position use cartesian position(import T).
-
-** Create ReflexxesVelocityRun()
-2. Velocity use cartesian space(import jacobian)
-
-********************************/
-
 #include "tm_reflexxes/include/tm_reflexxes/tm_reflexxes.h"
 
 //*************************************************************************
@@ -65,8 +54,6 @@ TODO :
 #define NUMBER_OF_DOFS                          6
 #define DEG2RAD 0.01745329252
 #define RAD2DEG 57.29577951
-
-#define MAX_VELOCITY 1.0
 #define MAX_ACC 0.0375*40 // 0.0375 : acc in 25ms
 
 using namespace std;

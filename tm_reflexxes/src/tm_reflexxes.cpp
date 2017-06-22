@@ -546,7 +546,13 @@ namespace tm_reflexxes{
         return pass;
     }
 
-
+    //  ********************************************************************/
+    //  fn        : ReflexxesSmoothStop_sim()
+    //  beirf     : Use RML velocity based API to stop robot smoothly.
+    //  param[in] : TR, Object of TM driver.
+    //  param[in] : &InputState, Current State of robot under RML velocity based.
+    //  param[in] : SynTime, The time for execute the trajectory.
+    //  ********************************************************************
     void ReflexxesSmoothStop_sim(   RMLVelocityInputParameters &InputState,
                                     double SynTime)
     {
@@ -659,6 +665,13 @@ namespace tm_reflexxes{
         delete  OP;
     }
 
+    //  ********************************************************************/
+    //  fn        : ReflexxesVelocityRun_sim()
+    //  beirf     : Use RML API to execute given velocity in simulation.  
+    //  param[in] : &InputState, Current State of robot under RML.
+    //  param[in] : TargetVelocity, The velocity when reach target position.
+    //  param[in] : SynTime, The time for execute the trajectory.
+    //  ********************************************************************
     bool ReflexxesVelocityRun_sim(  RMLVelocityInputParameters &InputState, 
                                     std::vector<double> TargetVelocity, 
                                     double SynTime)
@@ -796,6 +809,12 @@ namespace tm_reflexxes{
         return pass;
     }
 
+    //  ********************************************************************/
+    //  fn        : ReflexxesVelocityRun_sim() [Overloaded]
+    //  beirf     : Use RML API to execute given velocity in simulation.  
+    //  param[in] : &InputState, Current State of robot under RML.
+    //  param[in] : TargetVelocity, The velocity when reach target position.
+    //  ********************************************************************
     bool ReflexxesVelocityRun_sim(  RMLVelocityInputParameters &InputState, 
                                     std::vector<double> TargetVelocity)
     {
@@ -931,6 +950,13 @@ namespace tm_reflexxes{
         return pass;
     }
 
+    //  ********************************************************************/
+    //  fn        : ReflexxesPositionRun_sim()
+    //  beirf     : Use RML API to execute given position in silumation.  
+    //  param[in] : &InputState, Current State of robot under RML.
+    //  param[in] : TargetVelocity, The final velocity of each joint.
+    //  param[in] : SynTime, The time for execute the trajectory.
+    //  ********************************************************************
     bool ReflexxesPositionRun_sim(  RMLPositionInputParameters &InputState, 
                                     std::vector<double> TargetPosition,
                                     std::vector<double> TargetVelocity, 
