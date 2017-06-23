@@ -135,6 +135,7 @@ namespace tm_reflexxes{
 
         for (int i = 0; i < NUMBER_OF_DOFS; ++i)
         {
+            IP->MaxJerkVector->VecData[i] = 100; //RMLTypeII not using, needed for validity
             IP->MaxAccelerationVector->VecData[i] = 0.5*40;
             IP->TargetVelocityVector->VecData[i] = 0.0;
             if(IP->CurrentVelocityVector->VecData[i] != 0.0)    
@@ -264,6 +265,7 @@ namespace tm_reflexxes{
 
         for (int i = 0; i < NUMBER_OF_DOFS; ++i)
         {
+            IP->MaxJerkVector->VecData[i] = 100; //RMLTypeII not using, needed for validity
             IP->MaxAccelerationVector->VecData[i] = 0.5*40;
             IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
 
@@ -429,6 +431,7 @@ namespace tm_reflexxes{
             IP->CurrentPositionVector->VecData[i] = CurrentPosition[i];
             IP->MaxVelocityVector->VecData[i] = MAX_VELOCITY; //0.3247
             IP->MaxAccelerationVector->VecData[i] = MAX_ACC;
+            IP->MaxJerkVector->VecData[i] = 100; //RMLTypeII not using, needed for validity
             IP->TargetPositionVector->VecData[i] = TargetPosition[i]; 
             IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
             IP->SelectionVector->VecData[i] = true;
@@ -546,7 +549,7 @@ namespace tm_reflexxes{
         return pass;
     }
 
-    //  ********************************************************************/
+        //  ********************************************************************/
     //  fn        : ReflexxesSmoothStop_sim()
     //  beirf     : Use RML velocity based API to stop robot smoothly.
     //  param[in] : TR, Object of TM driver.
@@ -573,12 +576,12 @@ namespace tm_reflexxes{
         OP = new RMLVelocityOutputParameters(NUMBER_OF_DOFS);
         *IP = InputState;
 
-
         // ********************************************************************/
         // Creating all relevant objects of the Type II Reflexxes Motion Library*/
 
         for (int i = 0; i < NUMBER_OF_DOFS; ++i)
         {
+            IP->MaxJerkVector->VecData[i] = 100; //RMLTypeII not using, needed for validity
             IP->MaxAccelerationVector->VecData[i] = 0.5*40;
             IP->TargetVelocityVector->VecData[i] = 0.0;
             
@@ -596,7 +599,9 @@ namespace tm_reflexxes{
         if (IP->CheckForValidity())
             printf("Input values are valid!\n");
         else
+        {
             printf("Input values are INVALID!\n");
+        }
 
         Flags.SynchronizationBehavior = RMLFlags::ONLY_TIME_SYNCHRONIZATION;
 
@@ -697,6 +702,7 @@ namespace tm_reflexxes{
         // Creating all relevant objects of the Type II Reflexxes Motion Library
         for (int i = 0; i < NUMBER_OF_DOFS; ++i)
         {
+            IP->MaxJerkVector->VecData[i] = 100; //RMLTypeII not using, needed for validity
             IP->MaxAccelerationVector->VecData[i] = 0.5*40;
             IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
 
@@ -839,6 +845,7 @@ namespace tm_reflexxes{
         // Creating all relevant objects of the Type II Reflexxes Motion Library
         for (int i = 0; i < NUMBER_OF_DOFS; ++i)
         {
+            IP->MaxJerkVector->VecData[i] = 100; //RMLTypeII not using, needed for validity
             IP->MaxAccelerationVector->VecData[i] = 0.5*40;
             IP->TargetVelocityVector->VecData[i] = TargetVelocity[i];
 
@@ -990,6 +997,7 @@ namespace tm_reflexxes{
         //  ********************************************************************
         for (int i = 0; i < NUMBER_OF_DOFS; ++i)
         {
+            IP->MaxJerkVector->VecData[i] = 100; //RMLTypeII not using, needed for validity
             IP->MaxVelocityVector->VecData[i] = MAX_VELOCITY; //0.3247
             IP->MaxAccelerationVector->VecData[i] = MAX_ACC;
             IP->TargetPositionVector->VecData[i] = TargetPosition[i]; 
@@ -1058,10 +1066,10 @@ namespace tm_reflexxes{
                 {
                     print_info("Smooth Stop Activate...");
                     RMLVelocityInputParameters *IP_vel = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
+
                     *IP_vel->CurrentPositionVector     = *IP->CurrentPositionVector;
                     *IP_vel->CurrentVelocityVector     = *IP->CurrentVelocityVector;
                     *IP_vel->CurrentAccelerationVector = *IP->CurrentAccelerationVector;
-                    
                     ReflexxesSmoothStop_sim(*IP_vel, 0.5);
                     delete IP_vel;
                     pass = false;
