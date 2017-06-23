@@ -39,8 +39,8 @@ using namespace std;
 int main(int argc, char **argv)
 {
     bool run_succeed = true;
-    double SynchronousTime = 3.0;
-    std::vector<double> TargetPosition, TargetVelocity;
+    double SynchronousTime = 1.0;
+    std::vector<double> TargetPosition(6), TargetVelocity(6);
 
     RMLPositionInputParameters  *IP_position = new RMLPositionInputParameters(NUMBER_OF_DOFS);
     RMLVelocityInputParameters  *IP_velocity = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
@@ -51,12 +51,12 @@ int main(int argc, char **argv)
         IP_position->CurrentVelocityVector->VecData[i] = 0.0;
         IP_position->CurrentAccelerationVector->VecData[i] = 0.0;
 
-        IP_velocity->CurrentPositionVector->VecData[i] = 0.0;
-        IP_velocity->CurrentVelocityVector->VecData[i] = 0.0;
+        IP_velocity->CurrentPositionVector->VecData[i] = 1.0;
+        IP_velocity->CurrentVelocityVector->VecData[i] = 1.0;
         IP_velocity->CurrentAccelerationVector->VecData[i] = 0.0;
     }
 
-   /* while(run_succeed)
+    /*while(run_succeed)
     {
         if (run_succeed)
         {
