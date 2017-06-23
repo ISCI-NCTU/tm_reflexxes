@@ -17,7 +17,7 @@ file(GLOB TM_REFLEXXEX_SRC
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -pthread")
 
-add_executable(tm_reflexxes main.cpp ${TM_REFLEXXEX_SRC})
-add_executable(tm_otg tm_otg.cpp ${TM_REFLEXXEX_SRC})
+add_executable(tm_reflexxes  main.cpp   ${TM_REFLEXXEX_SRC})
+add_executable(tm_otg        tm_otg.cpp ${TM_REFLEXXEX_SRC})
 
 install(TARGETS tm_reflexxes RUNTIME DESTINATION bin)
