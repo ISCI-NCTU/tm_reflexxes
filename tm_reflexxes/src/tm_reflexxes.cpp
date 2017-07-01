@@ -111,7 +111,7 @@ namespace tm_reflexxes{
     //  param[in] : SynTime, The time for execute the trajectory.
     //  ********************************************************************
     void ReflexxesSmoothStop(       TmDriver& TR,
-                                    RMLVelocityInputParameters &InputState, 
+                                    RMLVelocityInputParameters *InputState, 
                                     double SynTime)
     {
         double blend = 0, time_s;
@@ -128,7 +128,7 @@ namespace tm_reflexxes{
         RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
         IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
         OP = new RMLVelocityOutputParameters(NUMBER_OF_DOFS);
-        *IP = InputState;
+        IP = InputState;
 
 
         // ********************************************************************/
@@ -223,7 +223,7 @@ namespace tm_reflexxes{
             printf(" %10.4lf ",FinalPosition[i]);
         printf("\n");
         print_info("Smooth stop finish in %llu us", tt);
-        InputState = *IP;
+        InputState = IP;
 
         delete  RML;
         delete  IP;
@@ -473,9 +473,7 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    //std::vector<double>StopVelocity = {0.0 , 0.0, 0.0, 0.0, 0.0, 0.0};
-                    //ReflexxesSmoothStop(TR,*IP, StopVelocity, 0.5);
-                    ReflexxesSmoothStop(TR,*IP, 0.5);
+                    ReflexxesSmoothStop(TR, IP, 0.5);
                     pass = false;
                     break;
                 }
@@ -634,13 +632,7 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    RMLVelocityInputParameters *IP_vel = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
-                    *IP_vel->CurrentPositionVector     = *IP->CurrentPositionVector;
-                    *IP_vel->CurrentVelocityVector     = *IP->CurrentVelocityVector;
-                    *IP_vel->CurrentAccelerationVector = *IP->CurrentAccelerationVector;
-                    
-                    ReflexxesSmoothStop(TR,*IP_vel, 0.5);
-                    delete IP_vel;
+                    ReflexxesSmoothStop(TR, IP, 0.5);
                     pass = false;
                     break;
                 }
@@ -685,6 +677,10 @@ namespace tm_reflexxes{
         return pass;
     }
 
+
+
+
+
     //  ********************************************************************/
     //  fn        : ReflexxesSmoothStop_sim() [Overloaded] : velocity-based use
     //  beirf     : Use RML velocity based API to stop robot smoothly.
@@ -693,7 +689,7 @@ namespace tm_reflexxes{
     //  param[in] : &InputState, Current State of robot under RML velocity based.
     //  param[in] : SynTime, The time for execute the trajectory.
     //  ********************************************************************
-    void ReflexxesSmoothStop_sim(   RMLVelocityInputParameters &InputState,
+    void ReflexxesSmoothStop_sim(   RMLVelocityInputParameters *InputState,
                                     double SynTime)
     {
         double time_s;
@@ -711,7 +707,7 @@ namespace tm_reflexxes{
         RML = new ReflexxesAPI(NUMBER_OF_DOFS, CYCLE_TIME_IN_SECONDS);
         IP = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
         OP = new RMLVelocityOutputParameters(NUMBER_OF_DOFS);
-        *IP = InputState;
+        IP = InputState;
 
         // ********************************************************************/
         // Creating all relevant objects of the Type II Reflexxes Motion Library*/
@@ -800,7 +796,7 @@ namespace tm_reflexxes{
             printf(" %10.4lf ",IP->CurrentPositionVector->VecData[i]);
         printf("\n");
         print_info("Smooth stop finish in %llu us", tt);
-        InputState = *IP;
+        InputState = IP;
 
         delete  RML;
         delete  IP;
@@ -1037,7 +1033,7 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    ReflexxesSmoothStop_sim(*IP, 0.5);
+                    ReflexxesSmoothStop_sim(IP, 0.5);
                     pass = false;
                     break;
                 }
@@ -1179,7 +1175,7 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    ReflexxesSmoothStop_sim(*IP, 0.5);
+                    ReflexxesSmoothStop_sim(IP, 0.5);
                     pass = false;
                     break;
                 }
@@ -1329,13 +1325,7 @@ namespace tm_reflexxes{
                 if (c == 'q' || c == 'Q')
                 {
                     print_info("Smooth Stop Activate...");
-                    RMLVelocityInputParameters *IP_vel = new RMLVelocityInputParameters(NUMBER_OF_DOFS);
-
-                    *IP_vel->CurrentPositionVector     = *IP->CurrentPositionVector;
-                    *IP_vel->CurrentVelocityVector     = *IP->CurrentVelocityVector;
-                    *IP_vel->CurrentAccelerationVector = *IP->CurrentAccelerationVector;
-                    ReflexxesSmoothStop_sim(*IP_vel, 0.5);
-                    delete IP_vel;
+                    ReflexxesSmoothStop_sim(IP, 0.5);
                     pass = false;
                     break;
                 }
