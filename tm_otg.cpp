@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         IP_velocity->CurrentAccelerationVector->VecData[i] = 0.0;
     }
 
-    /*while(run_succeed)
+    while(run_succeed)
     {
         if (run_succeed)
         {
@@ -75,10 +75,10 @@ int main(int argc, char **argv)
         }
         else
             break;
-    }*/
+    }
 
     
-    while(run_succeed)
+    /*while(run_succeed)
     {
         if(run_succeed)
         {
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
         }
         else
             break;
-    }
+    }*/
 
 
 
