@@ -69,6 +69,10 @@ namespace tm_reflexxes {
 	                                RMLVelocityInputParameters &InputState,
 	                                double SynTime);
 
+	void ReflexxesSmoothStop(       TmDriver& TR,
+									RMLPositionInputParameters *InputState,
+									double SynTime);
+
 	bool ReflexxesVelocityRun(      TmDriver& TR,
 	                                RMLVelocityInputParameters &InputState, 
 	                                std::vector<double> TargetVelocity, 
@@ -86,6 +90,9 @@ namespace tm_reflexxes {
 	//Simulation Function : Only generate trajectory
 	
 	void ReflexxesSmoothStop_sim(   RMLVelocityInputParameters &InputState, 
+                                    double SynTime);
+
+	void ReflexxesSmoothStop_sim(   RMLPositionInputParameters *InputState,
                                     double SynTime);
 
 	bool ReflexxesVelocityRun_sim(  RMLVelocityInputParameters &InputState, 
