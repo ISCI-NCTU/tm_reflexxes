@@ -191,6 +191,16 @@ bool TmDriver::setJointSpdModeoOFF()
     return (interface->sendCommandMsg("nrtservo 0 stop") > 0);
 }
 
+bool TmDriver::FreeBottonEnable()
+{
+    return (interface->sendCommandMsg("cmd50 0 1") > 0);
+}
+
+bool TmDriver::FreeBottonDisable()
+{
+    return (interface->sendCommandMsg("cmd50 0 0") > 0);
+}
+
 bool TmDriver::setMoveJointSpeedabs(const std::vector<double>& q, double blend)
 {
     unsigned int dof = interface->stateRT->getDOF();

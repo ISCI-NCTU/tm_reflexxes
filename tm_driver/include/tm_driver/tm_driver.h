@@ -113,6 +113,9 @@ public:
   bool setRobotStop();
   bool setJointSpdModeoOFF();
   bool setJointSpdModeON();
+  bool FreeBottonEnable();
+  bool FreeBottonDisable();
+
 
   
 
